@@ -1,0 +1,56 @@
+<?php
+/**
+ * Sitemap Generator for FolloPay
+ * Save as: sitemap.php or sitemap.xml
+ * 
+ * This file generates a dynamic XML sitemap that search engines use
+ * to discover and index all important pages on your website
+ */
+
+header('Content-Type: application/xml; charset=utf-8');
+header('Cache-Control: public, max-age=3600'); // Cache for 1 hour
+
+$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+$domain = $_SERVER['HTTP_HOST'];
+$baseUrl = $protocol . '://' . $domain;
+
+// Pages to include in sitemap with priority
+$pages = [
+    // High Priority Pages (landing pages)
+    ['url' => '/', 'priority' => '1.0', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+    
+    // Core User Pages
+    ['url' => '?page=dashboard', 'priority' => '0.9', 'changefreq' => 'daily', 'lastmod' => date('Y-m-d')],
+    ['url' => '?page=earn', 'priority' => '1.0', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+    ['url' => '?page=wallet', 'priority' => '0.8', 'changefreq' => 'daily', 'lastmod' => date('Y-m-d')],
+    ['url' => '?page=withdraw', 'priority' => '0.9', 'changefreq' => 'weekly', 'lastmod' => date('Y-m-d')],
+    ['url' => '?page=profile', 'priority' => '0.7', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+    
+    // Auth Pages
+    ['url' => '?page=login', 'priority' => '0.8', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+    ['url' => '?page=register', 'priority' => '0.8', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+    
+    // Support Pages
+    ['url' => '?page=help', 'priority' => '0.6', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+    
+    // Blog pages (if you have them - example URLs)
+    ['url' => '/blog/how-to-earn-money-from-reviews/', 'priority' => '0.8', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+    ['url' => '/blog/is-follopay-legitimate/', 'priority' => '0.8', 'changefreq' => 'monthly', 'lastmod' => date('Y-m-d')],
+];
+
+echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n";
+echo '         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"' . "\n";
+echo '         xmlns:mobile="http://www.mobile.googlebot.com/schemas/mobile-sitemaps/1.0">' . "\n";
+
+foreach ($pages as $page) {
+    echo "    <url>\n";
+    echo "        <loc>" . htmlspecialchars($baseUrl . $page['url']) . "</loc>\n";
+    echo "        <lastmod>" . $page['lastmod'] . "</lastmod>\n";
+    echo "        <changefreq>" . $page['changefreq'] . "</changefreq>\n";
+    echo "        <priority>" . $page['priority'] . "</priority>\n";
+    echo "    </url>\n";
+}
+
+echo '</urlset>';
+?>

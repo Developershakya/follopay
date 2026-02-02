@@ -1,0 +1,46 @@
+User-agent: *
+Allow: /
+
+# Allow crawling of all important pages
+Allow: /?page=earn
+Allow: /?page=dashboard
+Allow: /?page=wallet
+Allow: /?page=withdraw
+Allow: /?page=profile
+Allow: /?page=login
+Allow: /?page=register
+
+# Disallow admin pages from indexing
+Disallow: /?page=admin
+Disallow: /?page=admin-*
+Disallow: /config/
+Disallow: /controllers/
+Disallow: /models/
+Disallow: /ajax/
+Disallow: /uploads/
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*session=
+
+# Sitemap location
+Sitemap: https://follopay.com/sitemap.xml
+
+# Crawl delay to be respectful
+Crawl-delay: 1
+
+# Allow specific search engines to crawl everything
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
