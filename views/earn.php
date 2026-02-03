@@ -734,6 +734,42 @@ function releaseComment(assignmentId) {
     }
 }
 
+function getBadgeByLink(appLink) {
+    if (!appLink) return {
+        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+        alt: 'Get it on Google Play'
+    };
+
+    appLink = appLink.toLowerCase();
+
+    if (appLink.includes('youtube.com') || appLink.includes('youtu.be')) {
+        return {
+            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png',
+            alt: 'Subscribe on YouTube'
+        };
+    }
+
+    if (appLink.includes('maps') || appLink.includes('google.com/maps')) {
+        return {
+            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png',
+            alt: 'Rate us on Google Reviews'
+        };
+    }
+
+    if (appLink.includes('playstore')) {
+        return {
+            img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+            alt: 'Get it on Google Play'
+        };
+    }
+
+    // fallback
+    return {
+        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+        alt: 'Open link'
+    };
+}
+
 function loadAvailablePosts() {
     const earnContainer = document.getElementById('earnContainer');
     const mobileEarnContainer = document.getElementById('mobileEarnContainer');
@@ -748,19 +784,21 @@ function loadAvailablePosts() {
                 posts.forEach(post => {
                     const appName = post.app_name || 'Unknown App';
                     const appLink = post.app_link || '#';
+                    const badge = getBadgeByLink(appLink);
                     const price = parseFloat(post.price) || 0;
                     const commentsAvailable = post.available_comments || 0;
                     const postId = post.id;
+                    
 
                     html += `
                         <div class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col">
                             <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-5 border-b border-gray-200">
                                 <h3 class="font-bold text-lg text-gray-800 mb-2">${escapeHtml(appName)}</h3>
-                                <a href="${appLink}" target="_blank" title="Open on Google Play Store" class="inline-block mb-3">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-                                         alt="Google Play Store Badge" 
-                                         class="h-10 hover:scale-110 transition-transform duration-200">
-                                </a>
+                                    <a href="${appLink}" target="_blank" class="inline-block mb-3">
+                                        <img src="${badge.img}"
+                                            alt="${badge.alt}"
+                                            class="h-10 hover:scale-110 transition-transform duration-200">
+                                    </a>
                                 <div class="flex items-center justify-between">
                                     <span class="text-2xl font-bold text-green-600">₹${price.toFixed(2)}</span>
                                     <span class="bg-green-100 text-green-800 px-3 py-1 rounded text-xs font-semibold">Active</span>

@@ -424,7 +424,7 @@ $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
         });
 
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
+            
                 fetch('ajax/auth.php', {
                     method: 'POST',
                     headers: {
@@ -438,7 +438,7 @@ $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
                         window.location.href = '?page=login';
                     }
                 });
-            }
+            
         }
 
         // Initialize on page load

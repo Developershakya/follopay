@@ -26,13 +26,13 @@
                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
                            placeholder="Enter your full name" required>
                 </div>
-                
+
                 <div>
                     <label class="block text-gray-700 mb-2">Username</label>
-                    <input type="text" name="username" 
+                    <input type="text" name="username" id="usernameInput"
                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
                            placeholder="Choose a username" required>
-                    <p class="text-sm text-gray-600 mt-1">Letters, numbers, and underscores only</p>
+                    <p class="text-sm text-gray-600 mt-1">Min 3 characters</p>
                 </div>
                 
                 <div>
@@ -44,10 +44,10 @@
                 
                 <div>
                     <label class="block text-gray-700 mb-2">Phone Number</label>
-                    <input type="tel" name="phone" 
+                    <input type="tel" name="phone" id="phoneInput"
                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="+91 00000 00000">
-                    <p class="text-sm text-gray-600 mt-1">Optional - for withdrawal verification</p>
+                           placeholder="10 digit phone number" maxlength="10">
+                    <p class="text-sm text-gray-600 mt-1">Exactly 10 digits (numbers only)</p>
                 </div>
                 
                 <div>
@@ -84,15 +84,6 @@
                     </div>
                 </div>
                 
-                <!-- Referral Code (Optional) -->
-                <div>
-                    <label class="block text-gray-700 mb-2">Referral Code (Optional)</label>
-                    <input type="text" name="referral_code" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="Enter referral code if any">
-                    <p class="text-sm text-gray-600 mt-1">Get ₹10 bonus for you and your friend</p>
-                </div>
-                
                 <!-- Terms and Conditions -->
                 <div class="flex items-start">
                     <input type="checkbox" id="terms" name="terms" 
@@ -120,9 +111,6 @@
                     <i class="fas fa-user-plus mr-2"></i> Create Account
                 </button>
             </form>
-            
-            <!-- Registration Message -->
-            <div id="registerMessage" class="mt-4 text-center hidden"></div>
             
             <!-- Login Link -->
             <div class="text-center mt-6 pt-6 border-t">
@@ -158,7 +146,26 @@
     </div>
 </div>
 
+<!-- Toast Container -->
+<div id="toastContainer" class="fixed top-4 right-4 space-y-3 z-50"></div>
+
 <script>
+    // Phone number input - only numbers allowed, max 10 digits
+    document.getElementById('phoneInput').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (this.value.length > 10) {
+            this.value = this.value.slice(0, 10);
+        }
+    });
+
+    // Phone number paste validation
+    document.getElementById('phoneInput').addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        const numbersOnly = pastedText.replace(/[^0-9]/g, '').slice(0, 10);
+        this.value = numbersOnly;
+    });
+
     function toggleRegisterPassword() {
         const passwordInput = document.getElementById('registerPassword');
         const icon = document.getElementById('registerPasswordIcon');
@@ -189,25 +196,95 @@
         }
     }
 
+    // Toast notification function
+    function showToast(message, type = 'info', duration = 3000) {
+        const toastContainer = document.getElementById('toastContainer');
+        
+        const toast = document.createElement('div');
+        toast.className = `flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg text-white animate-fade-in ${
+            type === 'success' ? 'bg-green-500' :
+            type === 'error' ? 'bg-red-500' :
+            type === 'warning' ? 'bg-yellow-500' :
+            'bg-blue-500'
+        }`;
+        
+        let icon = 'fa-info-circle';
+        if (type === 'success') icon = 'fa-check-circle';
+        if (type === 'error') icon = 'fa-exclamation-circle';
+        if (type === 'warning') icon = 'fa-exclamation-triangle';
+        
+        toast.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.remove()" class="ml-auto hover:opacity-80">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after duration
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Basic validation
+        const name = this.elements.name.value.trim();
+        const username = this.elements.username.value.trim();
+        const email = this.elements.email.value.trim();
+        const phone = this.elements.phone.value.trim();
         const password = this.elements.password.value;
         const confirmPassword = this.elements.confirm_password.value;
         
+        // Frontend validation
+        if (!name) {
+            showToast('Full name is required', 'error');
+            return;
+        }
+        
+        if (username.length < 3) {
+            showToast('Username must be at least 3 characters', 'error');
+            return;
+        }
+        
+        if (!email) {
+            showToast('Email is required', 'error');
+            return;
+        }
+        
+        if (!phone || phone.length !== 10) {
+            showToast('Phone number must be exactly 10 digits', 'error');
+            return;
+        }
+        
         if (password !== confirmPassword) {
-            showMessage('Passwords do not match!', 'error');
+            showToast('Passwords do not match!', 'error');
             return;
         }
         
         if (password.length < 6) {
-            showMessage('Password must be at least 6 characters', 'error');
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+        }
+        
+        if (!/[A-Z]/.test(password)) {
+            showToast('Password must contain at least one uppercase letter', 'error');
+            return;
+        }
+        
+        if (!/[0-9]/.test(password)) {
+            showToast('Password must contain at least one number', 'error');
             return;
         }
         
         if (!this.elements.terms.checked) {
-            showMessage('You must accept the terms and conditions', 'error');
+            showToast('You must accept the terms and conditions', 'error');
             return;
         }
         
@@ -231,59 +308,37 @@
             const data = await response.json();
             
             if (data.success) {
-                showMessage(data.message, 'success');
+                showToast(data.message || 'Account created successfully!', 'success');
                 
                 // Redirect to dashboard after successful registration
                 setTimeout(() => {
                     window.location.href = '?page=dashboard';
                 }, 2000);
             } else {
-                showMessage(data.message || 'Registration failed', 'error');
+                // Handle backend validation errors
+                if (data.errors && typeof data.errors === 'object') {
+                    // Show each validation error
+                    Object.keys(data.errors).forEach(field => {
+                        const error = data.errors[field];
+                        if (Array.isArray(error)) {
+                            error.forEach(msg => showToast(msg, 'error'));
+                        } else {
+                            showToast(error, 'error');
+                        }
+                    });
+                } else {
+                    // Show general error message
+                    showToast(data.message || 'Registration failed', 'error');
+                }
             }
         } catch (error) {
             console.error('Error:', error);
-            showMessage('Network error. Please try again.', 'error');
+            showToast('Network error. Please try again.', 'error');
         } finally {
             // Reset button state
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
-    });
-
-    function showMessage(message, type) {
-        const messageDiv = document.getElementById('registerMessage');
-        messageDiv.classList.remove('hidden');
-        
-        if (type === 'success') {
-            messageDiv.className = 'text-green-600 font-bold text-center';
-            messageDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${message}`;
-        } else {
-            messageDiv.className = 'text-red-600 font-bold text-center';
-            messageDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i> ${message}`;
-        }
-        
-        // Auto-hide message after 5 seconds
-        setTimeout(() => {
-            messageDiv.classList.add('hidden');
-        }, 5000);
-    }
-
-    // Real-time username validation
-    document.querySelector('input[name="username"]').addEventListener('blur', function() {
-        const username = this.value.trim();
-        
-        if (username.length < 3) {
-            return;
-        }
-        
-        // Check username availability
-        fetch(`ajax/auth.php?action=check_username&username=${encodeURIComponent(username)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data.available) {
-                    showMessage('Username already taken', 'error');
-                }
-            });
     });
 
     // Password strength indicator
@@ -359,6 +414,21 @@ input:focus {
 button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease;
 }
 </style>
 </body>

@@ -13,6 +13,7 @@ switch($action) {
             'username' => $_POST['username'] ?? '',
             'email' => $_POST['email'] ?? '',
             'password' => $_POST['password'] ?? '',
+            'phone' => $_POST['phone'] ?? '',
             'confirm_password' => $_POST['confirm_password'] ?? ''
         ]);
         echo json_encode($result);

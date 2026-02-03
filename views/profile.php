@@ -186,23 +186,34 @@ $isAdmin = ($currentUser['role'] === 'admin');
     </div>
 
     <!-- Account Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button onclick="showReferral()" class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl text-center hover:from-green-600 hover:to-green-700 transition">
-            <i class="fas fa-user-plus text-3xl mb-3 block"></i>
-            <p class="font-bold text-lg">Refer Friends</p>
-            <p class="text-sm opacity-90">Earn ₹10 per referral</p>
-        </button>
-        
-<a href="mailto:shakyadeveloper@gmail.com?subject=Support%20Request"
-   class="block bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl text-center hover:from-blue-600 hover:to-blue-700 transition">
-    
-    <i class="fas fa-headset text-3xl mb-3 block"></i>
-    <p class="font-bold text-lg">Contact Support</p>
-    <p class="text-sm opacity-90">Need help? Contact us</p>
+<div class="grid grid-cols-3  gap-3">
 
-</a>
+    <!-- Refer -->
+    <button onclick="showReferral()"
+        class="bg-gradient-to-r from-green-500 to-green-600 text-white p-3 rounded-lg text-center">
+        <i class="fas fa-user-plus text-xl block mb-1"></i>
+        <p class="text-sm font-semibold">Refer</p>
+        <p class="text-xs opacity-90">₹10 Earn</p>
+    </button>
 
-    </div>
+    <!-- Support -->
+    <a href="mailto:follopayhelp@gmail.com?subject=Support%20Request"
+        class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-lg text-center">
+        <i class="fas fa-headset text-xl block mb-1"></i>
+        <p class="text-sm font-semibold">Support</p>
+        <p class="text-xs opacity-90">Help</p>
+    </a>
+
+    <!-- Telegram -->
+    <a href="https://t.me/YOUR_TELEGRAM_USERNAME" target="_blank"
+        class="bg-gradient-to-r from-sky-500 to-sky-600 text-white p-3 rounded-lg text-center">
+        <i class="fab fa-telegram-plane text-xl block mb-1"></i>
+        <p class="text-sm font-semibold">Telegram</p>
+        <p class="text-xs opacity-90">Join</p>
+    </a>
+
+</div>
+
 </div>
 
 <!-- Edit Profile Modal (Admin Only) -->

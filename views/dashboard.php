@@ -136,7 +136,41 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(err => console.error('Error loading stats:', err));
     }
+    function getBadgeByLink(appLink) {
+    if (!appLink) return {
+        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+        alt: 'Get it on Google Play'
+    };
 
+    appLink = appLink.toLowerCase();
+
+    if (appLink.includes('youtube.com') || appLink.includes('youtu.be')) {
+        return {
+            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png',
+            alt: 'Subscribe on YouTube'
+        };
+    }
+
+    if (appLink.includes('maps') || appLink.includes('google.com/maps')) {
+        return {
+            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png',
+            alt: 'Rate us on Google Reviews'
+        };
+    }
+
+    if (appLink.includes('playstore')) {
+        return {
+            img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+            alt: 'Get it on Google Play'
+        };
+    }
+
+    // fallback
+    return {
+        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+        alt: 'Open link'
+    };
+}
     function loadAvailablePosts() {
         fetch('ajax/posts.php?action=get_available')
             .then(response => response.json())
@@ -164,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         posts.forEach(post => {
                             const appName = post.app_name || 'Unknown App';
                             const appLink = post.app_link || '#';
+                            const badge = getBadgeByLink(appLink);
                             const price = parseFloat(post.price) || 0;
                             const commentsAvailable = post.available_comments || 0;
                             const postId = post.id;
@@ -175,12 +210,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <div class="flex justify-between items-start gap-3 mb-2">
                                             <div class="flex-1 min-w-0">
                                                 <h3 class="font-bold text-lg md:text-base text-gray-800 truncate">${appName}</h3>
-                                                <a href="${appLink}" target="_blank" class="inline-block mt-1">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-         alt="Play Store" 
-         class="h-8 md:h-10 hover:scale-105 transition-transform duration-200">
-</a>
-
+                                                <a href="${appLink}" target="_blank" class="inline-block mb-3">
+                                                    <img src="${badge.img}"
+                                                        alt="${badge.alt}"
+                                                        class="h-10 hover:scale-110 transition-transform duration-200">
+                                                </a>
                                             </div>
                                         </div>
                                         <div class="flex items-center justify-between">

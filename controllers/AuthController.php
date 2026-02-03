@@ -12,45 +12,67 @@ class AuthController {
         $this->session = new Session();
     }
     
-    public function register($data) {
-        $validation = new Validation();
-        
-        // Validate inputs
-        $rules = [
-            'username' => 'required|min:3|max:50|unique:users',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'confirm_password' => 'required|matches:password'
+public function register($data) {
+    $validation = new Validation();
+    
+    // ✅ Validation rules
+    $rules = [
+        'username' => 'required|min:3|max:50|unique:users',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6',
+        // 👇 Phone: required + only numbers + exactly 10 digits + unique
+        'phone' => 'required|regex:/^[0-9]{10}$/|unique:users',
+        'confirm_password' => 'required|matches:password'
+    ];
+
+    // ❌ Validation failed
+    if (!$validation->validate($data, $rules)) {
+        return [
+            'success' => false,
+            'errors'  => $validation->errors()
         ];
-        
-        if (!$validation->validate($data, $rules)) {
-            return ['success' => false, 'errors' => $validation->errors()];
-        }
-        
-        // Create user
-        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
-        
-        $stmt = $this->db->prepare("
-            INSERT INTO users (username, email, password, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
-        
-        try {
-            $stmt->execute([$data['username'], $data['email'], $hashedPassword]);
-            $userId = $this->db->lastInsertId();
-            
-            // Auto login after registration
-            $this->login([
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'remember' => false
-            ]);
-            
-            return ['success' => true, 'message' => 'Registration successful!'];
-        } catch(PDOException $e) {
-            return ['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()];
-        }
     }
+
+    // 🔐 Password hash
+    $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+
+    // 🧾 Insert query
+    $stmt = $this->db->prepare("
+        INSERT INTO users (username, email, password, phone, created_at) 
+        VALUES (?, ?, ?, ?, NOW())
+    ");
+
+    try {
+        $stmt->execute([
+            $data['username'],
+            $data['email'],
+            $hashedPassword,
+            $data['phone']
+        ]);
+
+        $userId = $this->db->lastInsertId();
+
+        // 🔁 Auto login after registration
+        $this->login([
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'remember' => false
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Registration successful!'
+        ];
+
+    } catch (PDOException $e) {
+        return [
+            'success' => false,
+            'message' => 'Registration failed. Please try again.'
+            // production me $e->getMessage() mat dikhana
+        ];
+    }
+}
+
     
     public function login($data) {
         $validation = new Validation();
