@@ -94,7 +94,9 @@ $viewFiles = [
     'manage-images' => 'views/admin/manage-images.php',
     'verify-otp' => 'views/auth/verify-otp.php',
     'reset-password-verify' => 'views/auth/reset-password-verify.php',
-    'reset-password-form' => 'views/auth/reset-password-form.php'
+    'reset-password-form' => 'views/auth/reset-password-form.php',
+    'test' => 'views/test.php',
+    'device-tracking' => 'views/admin/device-tracking.html'
 ];
 
 $viewFile = $viewFiles[$page] ?? 'views/404.php';
@@ -146,7 +148,7 @@ if (in_array($page, ['login', 'register'])) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="format-detection" content="telephone=no">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php include 'header.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script type="application/ld+json">

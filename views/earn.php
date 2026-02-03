@@ -33,7 +33,7 @@ if (!$auth->checkAuth()) {
     <!-- Canonical URL -->
     <link rel="canonical" href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?>/?page=earn">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <?php include 'header.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>

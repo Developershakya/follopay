@@ -10,8 +10,8 @@ $db = Database::getInstance()->getConnection();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <script src="https://cdn.tailwindcss.com"></script>
-                      <script src="../../assets/js/withdrawals.js"></script>
+     <?php include 'header.php'; ?>
+     <script src="../../assets/js/withdrawals.js"></script>
     <title>Document</title>
 </head>
 <body>

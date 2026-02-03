@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Tracking - Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        .status-banned { background: #fecaca; color: #7c2d12; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        
+        table {
+            font-size: 0.875rem;
+        }
+        
+        .duplicate-badge {
+            display: inline-block;
+            background: #fecaca;
+            color: #7c2d12;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Device Tracking & Security</h1>
+                        <p class="text-gray-600 mt-1">Monitor suspicious accounts aur multiple device usage</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-4xl font-bold text-red-600" id="suspiciousCount">-</div>
+                        <p class="text-gray-600">Suspicious Users</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="flex border-b">
+                    <button onclick="showTab('suspicious')" class="tab-btn active px-6 py-4 font-semibold text-gray-700 border-b-2 border-blue-600 cursor-pointer">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Suspicious Users
+                    </button>
+                    <button onclick="showTab('activity')" class="tab-btn px-6 py-4 font-semibold text-gray-700 border-b-2 border-transparent cursor-pointer hover:text-blue-600">
+                        <i class="fas fa-history mr-2"></i> Login History
+                    </button>
+                    <button onclick="showTab('devices')" class="tab-btn px-6 py-4 font-semibold text-gray-700 border-b-2 border-transparent cursor-pointer hover:text-blue-600">
+                        <i class="fas fa-mobile-alt mr-2"></i> Device Tracking
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            
+            <!-- 1. Suspicious Users Tab -->
+            <div id="suspicious" class="tab-content">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-bold text-gray-900">Multiple Accounts Detected</h2>
+                        <p class="text-gray-600 text-sm mt-1">Yeh users multiple devices/IPs se login kar rahe hain</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">#</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Username</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Email</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Phone</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Devices</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">IPs</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Last Login</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suspiciousTable">
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Activity/Login History Tab -->
+            <div id="activity" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900">Login History</h2>
+                                <p class="text-gray-600 text-sm mt-1">Sabhi login attempts aur activities</p>
+                            </div>
+                            <div>
+                                <input type="text" id="searchActivity" placeholder="Search username/email..." 
+                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       onkeyup="filterActivityTable()">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">User</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">IP Address</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Time</th>
+                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Browser</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityTable">
+                                <tr class="border-b">
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Device Tracking Tab -->
+            <div id="devices" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Device Summary -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">IP Analysis</h3>
+                        <div id="ipAnalysis" class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <span class="text-gray-700">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Device Details -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Top Countries</h3>
+                        <div id="locationAnalysis" class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                <span class="text-gray-700">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('border-blue-600');
+                btn.classList.add('border-transparent');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.closest('.tab-btn').classList.add('active');
+            event.target.closest('.tab-btn').classList.add('border-blue-600');
+            event.target.closest('.tab-btn').classList.remove('border-transparent');
+            
+            // Load data for the tab
+            if (tabName === 'suspicious') loadSuspiciousUsers();
+            if (tabName === 'activity') loadActivityHistory();
+            if (tabName === 'devices') loadDeviceAnalysis();
+        }
+
+        // Load suspicious users
+        function loadSuspiciousUsers() {
+            fetch('api/admin/suspicious-users.php', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tableBody = document.getElementById('suspiciousTable');
+                    tableBody.innerHTML = '';
+                    
+                    document.getElementById('suspiciousCount').textContent = data.data.length;
+                    
+                    if (data.data.length === 0) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    Koi suspicious users nahi - System safe hai! ✅
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    data.data.forEach((user, index) => {
+                        const uniqueDevices = user.unique_devices || 0;
+                        const ips = (user.ip_addresses || '').split(',').length;
+                        
+                        tableBody.innerHTML += `
+                            <tr class="border-b hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-gray-900 font-semibold">${index + 1}</td>
+                                <td class="px-6 py-4 text-gray-900">${user.username}</td>
+                                <td class="px-6 py-4 text-gray-600">${user.email}</td>
+                                <td class="px-6 py-4 text-gray-600">${user.phone}</td>
+                                <td class="px-6 py-4">
+                                    ${uniqueDevices > 1 ? `<span class="duplicate-badge"><i class="fas fa-exclamation mr-1"></i>${uniqueDevices} devices</span>` : `<span class="text-green-600">${uniqueDevices}</span>`}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">${ips} IPs</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">${user.last_device_login ? new Date(user.last_device_login).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-6 py-4">
+                                    <button onclick="viewUserDetails(${user.id})" class="text-blue-600 hover:text-blue-900 font-semibold">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Load activity history
+        function loadActivityHistory() {
+            fetch('api/admin/activity-history.php', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tableBody = document.getElementById('activityTable');
+                    tableBody.innerHTML = '';
+                    
+                    data.data.forEach(activity => {
+                        const statusClass = `status-${activity.status}`;
+                        const icon = getStatusIcon(activity.status);
+                        
+                        tableBody.innerHTML += `
+                            <tr class="border-b hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-gray-900">${activity.username || 'Unknown'}</td>
+                                <td class="px-6 py-4 text-gray-600 font-mono text-sm">${activity.ip_address}</td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge ${statusClass}">
+                                        ${icon} ${activity.status}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">${formatDate(activity.login_time)}</td>
+                                <td class="px-6 py-4 text-xs text-gray-500">${truncateText(activity.user_agent, 50)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function filterActivityTable() {
+            const searchTerm = document.getElementById('searchActivity').value.toLowerCase();
+            const rows = document.querySelectorAll('#activityTable tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Device analysis
+        function loadDeviceAnalysis() {
+            // Yeh API ko implement karna hoga
+            console.log('Device analysis loading...');
+        }
+
+        // Helper functions
+        function getStatusIcon(status) {
+            const icons = {
+                'success': '<i class="fas fa-check-circle"></i>',
+                'failed': '<i class="fas fa-times-circle"></i>',
+                'banned': '<i class="fas fa-ban"></i>',
+                'logout': '<i class="fas fa-sign-out-alt"></i>'
+            };
+            return icons[status] || '';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        function truncateText(text, length) {
+            if (!text) return 'N/A';
+            return text.length > length ? text.substring(0, length) + '...' : text;
+        }
+
+        function viewUserDetails(userId) {
+            alert('User details modal will open here');
+            // Yeh function implement kar sakte ho
+        }
+
+        // Initial load
+        window.addEventListener('load', function() {
+            loadSuspiciousUsers();
+        });
+    </script>
+</body>
+</html>
