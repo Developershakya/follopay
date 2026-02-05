@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <?php include 'header.php'; ?>
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="m-8">
     <div class="max-w-6xl mx-auto">
     <!-- Page Header -->
     <div class="text-center mb-8">
@@ -242,15 +243,19 @@
         <p class="mb-6 opacity-90">Our support team is here to help you 24/7</p>
         
         <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
-            <a href="mailto:support@earnapp.com" 
+            <a href="mailto:follopayhelp@gmail.com" 
                class="bg-white text-blue-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100">
                 <i class="fas fa-envelope mr-2"></i> Email Support
             </a>
             
-            <button onclick="showLiveChat()" 
-                    class="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-bold hover:bg-white hover:text-blue-600">
-                <i class="fas fa-comments mr-2"></i> Live Chat
-            </button>
+<a href="https://t.me/FolloPaySupport" target="_blank"
+    class="bg-transparent border-2 border-white px-6 py-3 rounded-lg text-center font-bold  gap-2 hover:bg-white hover:text-blue-600">
+    
+    <i class="fab fa-telegram-plane text-lg"></i>
+    <span>Telegram </span>
+</a>
+
+
         </div>
         
         <p class="mt-6 text-sm opacity-80">

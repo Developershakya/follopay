@@ -16,7 +16,7 @@
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         <div class="text-center ">
-            <img src="/follo/asserts/logo/logo.png" alt="Logo" class="h-16 mx-auto ">
+            <img src="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770007061/logo_v89hgg.png" alt="Logo" class="h-16 mx-auto ">
             <p class="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
@@ -59,6 +59,14 @@
                     <a href="?page=register" class="text-blue-600 font-bold">Sign up</a>
                 </p>
             </div>
+            <div class="text-center mt-4">
+            <a href="?page=help"
+            class="text-sm text-gray-500 hover:text-blue-600 flex items-center justify-center gap-2">
+            <i class="fas fa-circle-question"></i>
+            Need help?
+            </a>
+            </div>
+
         </form>
 
         <div id="message" class="mt-4 text-center hidden"></div>

@@ -1,335 +1,1699 @@
+<!-- admin_dashboard.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Tracking - Admin Panel</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <title>Security Dashboard - <?php echo SITE_NAME; ?></title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Date Range Picker -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    
     <style>
+        /* Custom animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Risk level colors */
+        .risk-critical { background: linear-gradient(135deg, #f56565, #c53030); }
+        .risk-high { background: linear-gradient(135deg, #ed8936, #c05621); }
+        .risk-medium { background: linear-gradient(135deg, #ecc94b, #d69e2e); }
+        .risk-low { background: linear-gradient(135deg, #48bb78, #2f855a); }
+        .risk-safe { background: linear-gradient(135deg, #38b2ac, #2c7a7b); }
+        
+        /* Status badges */
         .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-        .status-success { background: #dcfce7; color: #166534; }
-        .status-failed { background: #fee2e2; color: #991b1b; }
-        .status-banned { background: #fecaca; color: #7c2d12; }
-        .status-warning { background: #fef3c7; color: #92400e; }
-        
-        table {
-            font-size: 0.875rem;
-        }
-        
-        .duplicate-badge {
             display: inline-block;
-            background: #fecaca;
-            color: #7c2d12;
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-banned { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-review { background: #dbeafe; color: #1e40af; }
+        .status-limited { background: #f5d0fe; color: #86198f; }
+        
+        /* Progress bars */
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Table row hover effect */
+        .table-row-hover:hover {
+            background: #f9fafb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div class="min-h-screen p-4">
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+    
+    <?php
+    // Security check - must be admin
+    require_once '../controllers/AuthController.php';
+    $auth = new AuthController();
+    
+    if (!$auth->checkAuth() || !$auth->isAdmin()) {
+        header('Location: ?page=login');
+        exit;
+    }
+    
+    // Get current user
+    $currentUser = $auth->getCurrentUser();
+    
+    // Get timezone
+    date_default_timezone_set('UTC');
+    ?>
+    
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-md border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Left side -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-shield-alt text-2xl text-blue-600 mr-3"></i>
+                        <span class="text-xl font-bold text-gray-800">Security Dashboard</span>
+                    </div>
+                    
+                    <!-- Navigation links -->
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="#overview" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-chart-bar mr-2"></i> Overview
+                        </a>
+                        <a href="#reviews" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-clipboard-check mr-2"></i> Reviews
+                        </a>
+                        <a href="#devices" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-mobile-alt mr-2"></i> Devices
+                        </a>
+                        <a href="#users" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-users mr-2"></i> Users
+                        </a>
+                        <a href="#settings" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <i class="fas fa-cog mr-2"></i> Settings
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Right side -->
+                <div class="flex items-center">
+                    <!-- Date range picker -->
+                    <div class="relative mr-4">
+                        <input type="text" id="dateRange" class="bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Select date range">
+                    </div>
+                    
+                    <!-- User dropdown -->
+                    <div class="relative ml-3">
+                        <div class="flex items-center space-x-3 cursor-pointer" id="userDropdownBtn">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-medium text-gray-700"><?php echo htmlspecialchars($currentUser['username']); ?></p>
+                                <p class="text-xs text-gray-500">Administrator</p>
+                            </div>
+                            <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                <?php echo strtoupper(substr($currentUser['username'], 0, 1)); ?>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </div>
+                        
+                        <!-- Dropdown menu -->
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
+                            <a href="?page=dashboard" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-home mr-3"></i> Main Dashboard
+                            </a>
+                            <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user-circle mr-3"></i> Your Profile
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <a href="ajax/auth.php?action=logout" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-3"></i> Sign out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Page header -->
+        <div class="mb-8" id="overview">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Security Overview</h1>
+                    <p class="text-gray-600 mt-1">Real-time monitoring of fraud attempts and security events</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="refreshData()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh
+                    </button>
+                    <button onclick="exportData()" class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 flex items-center">
+                        <i class="fas fa-download mr-2"></i> Export Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Live alert indicator -->
+            <div class="mb-6">
+                <div class="flex items-center">
+                    <div class="relative mr-3">
+                        <div class="h-3 w-3 bg-green-500 rounded-full"></div>
+                        <div class="absolute inset-0 h-3 w-3 bg-green-500 rounded-full pulse-ring"></div>
+                    </div>
+                    <span class="text-sm text-gray-600">System Status: <span class="font-medium text-green-600">All Systems Operational</span></span>
+                    <span class="mx-3 text-gray-300">|</span>
+                    <span class="text-sm text-gray-600">Last updated: <span id="lastUpdated" class="font-medium">Just now</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Blocked -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Device Tracking & Security</h1>
-                        <p class="text-gray-600 mt-1">Monitor suspicious accounts aur multiple device usage</p>
+                        <p class="text-sm font-medium text-gray-600">Total Blocked</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="totalBlocked">0</p>
+                        <p class="text-sm text-gray-500 mt-1"><span id="blockedChange" class="text-red-600">+0 today</span></p>
                     </div>
-                    <div class="text-right">
-                        <div class="text-4xl font-bold text-red-600" id="suspiciousCount">-</div>
-                        <p class="text-gray-600">Suspicious Users</p>
+                    <div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-ban text-red-600 text-xl"></i>
                     </div>
                 </div>
             </div>
-
-            <!-- Tabs -->
-            <div class="bg-white rounded-lg shadow mb-6">
-                <div class="flex border-b">
-                    <button onclick="showTab('suspicious')" class="tab-btn active px-6 py-4 font-semibold text-gray-700 border-b-2 border-blue-600 cursor-pointer">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> Suspicious Users
-                    </button>
-                    <button onclick="showTab('activity')" class="tab-btn px-6 py-4 font-semibold text-gray-700 border-b-2 border-transparent cursor-pointer hover:text-blue-600">
-                        <i class="fas fa-history mr-2"></i> Login History
-                    </button>
-                    <button onclick="showTab('devices')" class="tab-btn px-6 py-4 font-semibold text-gray-700 border-b-2 border-transparent cursor-pointer hover:text-blue-600">
-                        <i class="fas fa-mobile-alt mr-2"></i> Device Tracking
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab Content -->
             
-            <!-- 1. Suspicious Users Tab -->
-            <div id="suspicious" class="tab-content">
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h2 class="text-xl font-bold text-gray-900">Multiple Accounts Detected</h2>
-                        <p class="text-gray-600 text-sm mt-1">Yeh users multiple devices/IPs se login kar rahe hain</p>
+            <!-- Pending Reviews -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pending Reviews</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="pendingReviews">0</p>
+                        <p class="text-sm text-gray-500 mt-1"><span id="reviewChange" class="text-yellow-600">+0 waiting</span></p>
                     </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b">
-                                <tr>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">#</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Username</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Email</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Phone</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Devices</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">IPs</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Last Login</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="suspiciousTable">
-                                <tr class="border-b hover:bg-gray-50">
-                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-clipboard-check text-yellow-600 text-xl"></i>
                     </div>
                 </div>
             </div>
-
-            <!-- 2. Activity/Login History Tab -->
-            <div id="activity" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <div class="p-6 border-b">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-900">Login History</h2>
-                                <p class="text-gray-600 text-sm mt-1">Sabhi login attempts aur activities</p>
-                            </div>
-                            <div>
-                                <input type="text" id="searchActivity" placeholder="Search username/email..." 
-                                       class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       onkeyup="filterActivityTable()">
-                            </div>
-                        </div>
+            
+            <!-- Suspicious Devices -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Suspicious Devices</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="suspiciousDevices">0</p>
+                        <p class="text-sm text-gray-500 mt-1"><span id="deviceChange" class="text-orange-600">+0 detected</span></p>
                     </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b">
-                                <tr>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">User</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">IP Address</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Time</th>
-                                    <th class="px-6 py-3 text-left font-semibold text-gray-700">Browser</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activityTable">
-                                <tr class="border-b">
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-orange-600 text-xl"></i>
                     </div>
                 </div>
             </div>
-
-            <!-- 3. Device Tracking Tab -->
-            <div id="devices" class="tab-content hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Device Summary -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">IP Analysis</h3>
-                        <div id="ipAnalysis" class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                <span class="text-gray-700">Loading...</span>
-                            </div>
+            
+            <!-- False Positives -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">False Positive Rate</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2" id="falsePositiveRate">0%</p>
+                        <p class="text-sm text-gray-500 mt-1"><span id="fpChange" class="text-green-600">-0% this week</span></p>
+                    </div>
+                    <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Risk Score Distribution -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Risk Score Distribution</h3>
+                    <select id="riskPeriod" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d" selected>Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                    </select>
+                </div>
+                <div class="h-64">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Fraud Types Breakdown -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Fraud Types Breakdown</h3>
+                    <div class="text-sm text-gray-500">Last 7 days</div>
+                </div>
+                <div class="h-64">
+                    <canvas id="fraudChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Reviews Section -->
+        <div class="mb-8" id="reviews">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Pending Manual Reviews</h3>
+                        <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full" id="reviewCountBadge">0 pending</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">Review suspicious activities and take action</p>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device Info</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="reviewsTableBody">
+                            <!-- Dynamic content will be loaded here -->
+                            <tr id="reviewsLoading">
+                                <td colspan="6" class="px-6 py-8 text-center">
+                                    <div class="flex justify-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    </div>
+                                    <p class="text-gray-500 mt-2">Loading pending reviews...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-600">
+                            Showing <span id="reviewsShowing">0</span> of <span id="reviewsTotal">0</span> reviews
+                        </div>
+                        <div class="flex space-x-2" id="reviewsPagination">
+                            <!-- Pagination will be loaded here -->
                         </div>
                     </div>
-                    
-                    <!-- Device Details -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Top Countries</h3>
-                        <div id="locationAnalysis" class="space-y-3">
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                <span class="text-gray-700">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Suspicious Devices Section -->
+        <div class="mb-8" id="devices">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Suspicious Devices</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="deviceSearch" placeholder="Search devices..." class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select id="deviceFilter" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">All Devices</option>
+                                <option value="suspicious">Suspicious Only</option>
+                                <option value="emulator">Emulators</option>
+                                <option value="multiple">Multiple Accounts</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trust Score</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Linked Accounts</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flags</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Seen</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="devicesTableBody">
+                            <!-- Dynamic content will be loaded here -->
+                            <tr id="devicesLoading">
+                                <td colspan="7" class="px-6 py-8 text-center">
+                                    <div class="flex justify-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    </div>
+                                    <p class="text-gray-500 mt-2">Loading device data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-600">
+                            <span id="devicesTotal">0</span> devices monitored
+                        </div>
+                        <button onclick="exportDevices()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="fas fa-download mr-1"></i> Export Device List
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Settings Section -->
+        <div class="mb-8" id="settings">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Risk Scoring Configuration</h3>
+                    <p class="text-sm text-gray-600 mt-1">Adjust sensitivity and thresholds for fraud detection</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="space-y-6">
+                        <!-- Threshold Settings -->
+                        <div>
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Action Thresholds</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Monitor Threshold</label>
+                                    <div class="flex items-center">
+                                        <input type="range" min="0" max="100" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="monitorThreshold">
+                                        <span class="ml-3 text-sm font-medium text-gray-700 w-10" id="monitorValue">30</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Score above which to monitor users</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Review Threshold</label>
+                                    <div class="flex items-center">
+                                        <input type="range" min="0" max="100" value="70" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="reviewThreshold">
+                                        <span class="ml-3 text-sm font-medium text-gray-700 w-10" id="reviewValue">70</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Score above which manual review required</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Block Threshold</label>
+                                    <div class="flex items-center">
+                                        <input type="range" min="0" max="100" value="85" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="blockThreshold">
+                                        <span class="ml-3 text-sm font-medium text-gray-700 w-10" id="blockValue">85</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Score above which to auto-block</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Factor Weights -->
+                        <div>
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Risk Factor Weights</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Device Similarity</span>
+                                        <span class="text-sm font-medium text-gray-700" id="weightDevice">30%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="weightDeviceInput">
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Emulator Detection</span>
+                                        <span class="text-sm font-medium text-gray-700" id="weightEmulator">25%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="25" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="weightEmulatorInput">
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Behavior Anomaly</span>
+                                        <span class="text-sm font-medium text-gray-700" id="weightBehavior">20%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="weightBehaviorInput">
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Velocity Check</span>
+                                        <span class="text-sm font-medium text-gray-700" id="weightVelocity">15%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="15" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="weightVelocityInput">
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Pattern Repetition</span>
+                                        <span class="text-sm font-medium text-gray-700" id="weightPattern">10%</span>
+                                    </div>
+                                    <input type="range" min="0" max="100" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" id="weightPatternInput">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="pt-4 border-t border-gray-200">
+                            <div class="flex justify-end">
+                                <button type="button" onclick="resetSettings()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">
+                                    Reset to Default
+                                </button>
+                                <button type="button" onclick="saveSettings()" class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 flex items-center">
+                                    <i class="fas fa-save mr-2"></i> Save Settings
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <script>
-        // Tab switching
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-            });
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.classList.remove('border-blue-600');
-                btn.classList.add('border-transparent');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName).classList.remove('hidden');
-            
-            // Add active class to clicked button
-            event.target.closest('.tab-btn').classList.add('active');
-            event.target.closest('.tab-btn').classList.add('border-blue-600');
-            event.target.closest('.tab-btn').classList.remove('border-transparent');
-            
-            // Load data for the tab
-            if (tabName === 'suspicious') loadSuspiciousUsers();
-            if (tabName === 'activity') loadActivityHistory();
-            if (tabName === 'devices') loadDeviceAnalysis();
-        }
-
-        // Load suspicious users
-        function loadSuspiciousUsers() {
-            fetch('api/admin/suspicious-users.php', {
-                method: 'GET',
-                headers: {'Content-Type': 'application/json'}
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const tableBody = document.getElementById('suspiciousTable');
-                    tableBody.innerHTML = '';
-                    
-                    document.getElementById('suspiciousCount').textContent = data.data.length;
-                    
-                    if (data.data.length === 0) {
-                        tableBody.innerHTML = `
+        
+        <!-- User Management Section -->
+        <div class="mb-8" id="users">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">User Management</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="userSearch" placeholder="Search users..." class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <select id="userFilter" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">All Users</option>
+                                <option value="banned">Banned Only</option>
+                                <option value="limited">Limited Only</option>
+                                <option value="high_risk">High Risk</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                    Koi suspicious users nahi - System safe hai! ✅
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Devices</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="usersTableBody">
+                            <!-- Dynamic content will be loaded here -->
+                            <tr id="usersLoading">
+                                <td colspan="8" class="px-6 py-8 text-center">
+                                    <div class="flex justify-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    </div>
+                                    <p class="text-gray-500 mt-2">Loading user data...</p>
                                 </td>
                             </tr>
-                        `;
-                        return;
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-600">
+                            Showing <span id="usersShowing">0</span> of <span id="usersTotal">0</span> users
+                        </div>
+                        <div class="flex space-x-2" id="usersPagination">
+                            <!-- Pagination will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity Log -->
+        <div class="mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Security Events</h3>
+                    <p class="text-sm text-gray-600 mt-1">Real-time log of security-related activities</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="space-y-4 max-h-96 overflow-y-auto custom-scrollbar" id="activityLog">
+                        <!-- Activity items will be loaded here -->
+                        <div class="flex justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for review details -->
+    <div id="reviewModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-xl bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Review Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <div id="modalContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+                <button onclick="closeModal()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="approveReview()" class="bg-green-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-green-700 flex items-center">
+                    <i class="fas fa-check mr-2"></i> Approve
+                </button>
+                <button onclick="rejectReview()" class="bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 flex items-center">
+                    <i class="fas fa-times mr-2"></i> Reject
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    
+    <script>
+        // Global variables
+        let currentReviewId = null;
+        let riskChart = null;
+        let fraudChart = null;
+        let currentPage = {
+            reviews: 1,
+            users: 1,
+            devices: 1
+        };
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date range picker
+            $('#dateRange').daterangepicker({
+                opens: 'left',
+                startDate: moment().subtract(7, 'days'),
+                endDate: moment(),
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                }
+            });
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Load initial data
+            loadAllData();
+            
+            // Set up auto-refresh every 30 seconds
+            setInterval(loadAllData, 30000);
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+        
+        function initializeCharts() {
+            // Risk Score Distribution Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(riskCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-20', '21-40', '41-60', '61-80', '81-100'],
+                    datasets: [{
+                        label: 'Number of Users',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(72, 187, 120, 0.7)',
+                            'rgba(236, 201, 75, 0.7)',
+                            'rgba(237, 137, 54, 0.7)',
+                            'rgba(245, 101, 101, 0.7)',
+                            'rgba(220, 38, 38, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(72, 187, 120)',
+                            'rgb(236, 201, 75)',
+                            'rgb(237, 137, 54)',
+                            'rgb(245, 101, 101)',
+                            'rgb(220, 38, 38)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
-                    
-                    data.data.forEach((user, index) => {
-                        const uniqueDevices = user.unique_devices || 0;
-                        const ips = (user.ip_addresses || '').split(',').length;
+                }
+            });
+            
+            // Fraud Types Chart
+            const fraudCtx = document.getElementById('fraudChart').getContext('2d');
+            fraudChart = new Chart(fraudCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Multiple Accounts', 'Emulator', 'Automated Behavior', 'Suspicious Device', 'Other'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(249, 115, 22, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(249, 115, 22)',
+                            'rgb(245, 158, 11)',
+                            'rgb(59, 130, 246)',
+                            'rgb(139, 92, 246)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function setupEventListeners() {
+            // User dropdown
+            document.getElementById('userDropdownBtn').addEventListener('click', function() {
+                document.getElementById('userDropdown').classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#userDropdownBtn') && !event.target.closest('#userDropdown')) {
+                    document.getElementById('userDropdown').classList.add('hidden');
+                }
+            });
+            
+            // Risk period selector
+            document.getElementById('riskPeriod').addEventListener('change', function() {
+                loadRiskChartData(this.value);
+            });
+            
+            // Threshold sliders
+            document.getElementById('monitorThreshold').addEventListener('input', function() {
+                document.getElementById('monitorValue').textContent = this.value;
+            });
+            
+            document.getElementById('reviewThreshold').addEventListener('input', function() {
+                document.getElementById('reviewValue').textContent = this.value;
+            });
+            
+            document.getElementById('blockThreshold').addEventListener('input', function() {
+                document.getElementById('blockValue').textContent = this.value;
+            });
+            
+            // Weight sliders
+            const weightInputs = ['weightDeviceInput', 'weightEmulatorInput', 'weightBehaviorInput', 'weightVelocityInput', 'weightPatternInput'];
+            weightInputs.forEach(inputId => {
+                document.getElementById(inputId).addEventListener('input', function() {
+                    const displayId = inputId.replace('Input', '');
+                    document.getElementById(displayId).textContent = this.value + '%';
+                    normalizeWeights();
+                });
+            });
+            
+            // Search and filter inputs
+            document.getElementById('deviceSearch').addEventListener('input', debounce(loadDevicesData, 300));
+            document.getElementById('deviceFilter').addEventListener('change', loadDevicesData);
+            document.getElementById('userSearch').addEventListener('input', debounce(loadUsersData, 300));
+            document.getElementById('userFilter').addEventListener('change', loadUsersData);
+            
+            // Date range change
+            $('#dateRange').on('apply.daterangepicker', function() {
+                loadAllData();
+            });
+        }
+        
+        function normalizeWeights() {
+            const weights = [
+                parseInt(document.getElementById('weightDeviceInput').value),
+                parseInt(document.getElementById('weightEmulatorInput').value),
+                parseInt(document.getElementById('weightBehaviorInput').value),
+                parseInt(document.getElementById('weightVelocityInput').value),
+                parseInt(document.getElementById('weightPatternInput').value)
+            ];
+            
+            const total = weights.reduce((a, b) => a + b, 0);
+            
+            if (total !== 100) {
+                // Normalize to 100%
+                const factor = 100 / total;
+                const normalized = weights.map(w => Math.round(w * factor));
+                
+                // Update display values
+                document.getElementById('weightDevice').textContent = normalized[0] + '%';
+                document.getElementById('weightEmulator').textContent = normalized[1] + '%';
+                document.getElementById('weightBehavior').textContent = normalized[2] + '%';
+                document.getElementById('weightVelocity').textContent = normalized[3] + '%';
+                document.getElementById('weightPattern').textContent = normalized[4] + '%';
+                
+                // Update slider values (for display only, actual values remain)
+                document.getElementById('weightDeviceInput').value = normalized[0];
+                document.getElementById('weightEmulatorInput').value = normalized[1];
+                document.getElementById('weightBehaviorInput').value = normalized[2];
+                document.getElementById('weightVelocityInput').value = normalized[3];
+                document.getElementById('weightPatternInput').value = normalized[4];
+            }
+        }
+        
+        function loadAllData() {
+            updateLastUpdated();
+            loadStats();
+            loadReviewsData();
+            loadDevicesData();
+            loadUsersData();
+            loadActivityLog();
+            loadRiskChartData('7d');
+            loadFraudChartData();
+        }
+        
+        function loadStats() {
+            fetch('ajax/admin.php?action=get_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalBlocked').textContent = data.stats.total_blocked.toLocaleString();
+                        document.getElementById('pendingReviews').textContent = data.stats.pending_reviews.toLocaleString();
+                        document.getElementById('suspiciousDevices').textContent = data.stats.suspicious_devices.toLocaleString();
+                        document.getElementById('falsePositiveRate').textContent = data.stats.false_positive_rate + '%';
                         
-                        tableBody.innerHTML += `
-                            <tr class="border-b hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-gray-900 font-semibold">${index + 1}</td>
-                                <td class="px-6 py-4 text-gray-900">${user.username}</td>
-                                <td class="px-6 py-4 text-gray-600">${user.email}</td>
-                                <td class="px-6 py-4 text-gray-600">${user.phone}</td>
-                                <td class="px-6 py-4">
-                                    ${uniqueDevices > 1 ? `<span class="duplicate-badge"><i class="fas fa-exclamation mr-1"></i>${uniqueDevices} devices</span>` : `<span class="text-green-600">${uniqueDevices}</span>`}
+                        // Update change indicators
+                        document.getElementById('blockedChange').textContent = (data.stats.blocked_today >= 0 ? '+' : '') + data.stats.blocked_today + ' today';
+                        document.getElementById('reviewChange').textContent = (data.stats.reviews_today >= 0 ? '+' : '') + data.stats.reviews_today + ' waiting';
+                        document.getElementById('deviceChange').textContent = (data.stats.devices_today >= 0 ? '+' : '') + data.stats.devices_today + ' detected';
+                        document.getElementById('fpChange').textContent = (data.stats.fp_change >= 0 ? '+' : '') + data.stats.fp_change + '% this week';
+                        
+                        // Update review count badge
+                        document.getElementById('reviewCountBadge').textContent = data.stats.pending_reviews + ' pending';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading stats:', error);
+                });
+        }
+        
+        function loadReviewsData(page = 1) {
+            currentPage.reviews = page;
+            document.getElementById('reviewsLoading').style.display = 'table-row';
+            
+            fetch(`ajax/admin.php?action=get_reviews&page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('reviewsLoading').style.display = 'none';
+                    
+                    if (data.success) {
+                        const tbody = document.getElementById('reviewsTableBody');
+                        tbody.innerHTML = '';
+                        
+                        if (data.reviews.length === 0) {
+                            tbody.innerHTML = `
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <i class="fas fa-check-circle text-3xl text-green-500 mb-3"></i>
+                                        <p class="text-lg font-medium">No pending reviews</p>
+                                        <p class="text-sm">All caught up! 🎉</p>
+                                    </td>
+                                </tr>
+                            `;
+                            return;
+                        }
+                        
+                        data.reviews.forEach(review => {
+                            const row = document.createElement('tr');
+                            row.className = 'table-row-hover cursor-pointer';
+                            row.onclick = () => openReviewModal(review.id);
+                            
+                            // Determine risk color
+                            let riskColor = 'text-green-600';
+                            let riskBg = 'bg-green-100';
+                            if (review.risk_score >= 85) {
+                                riskColor = 'text-red-600';
+                                riskBg = 'bg-red-100';
+                            } else if (review.risk_score >= 70) {
+                                riskColor = 'text-orange-600';
+                                riskBg = 'bg-orange-100';
+                            }
+                            
+                            // Format timestamp
+                            const submitted = moment(review.created_at).fromNow();
+                            
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-8 w-8 rounded-full ${review.user_id % 2 === 0 ? 'bg-blue-100' : 'bg-purple-100'} flex items-center justify-center text-sm font-bold ${review.user_id % 2 === 0 ? 'text-blue-600' : 'text-purple-600'}">
+                                            ${review.username.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">${escapeHtml(review.username)}</div>
+                                            <div class="text-xs text-gray-500">ID: ${review.user_id}</div>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">${ips} IPs</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">${user.last_device_login ? new Date(user.last_device_login).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold ${riskColor}">${review.risk_score}</div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                        <div class="${riskBg} h-1.5 rounded-full" style="width: ${review.risk_score}%"></div>
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4">
-                                    <button onclick="viewUserDetails(${user.id})" class="text-blue-600 hover:text-blue-900 font-semibold">
+                                    <div class="text-sm text-gray-900">${escapeHtml(review.reason)}</div>
+                                    <div class="text-xs text-gray-500">${escapeHtml(review.context)}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${review.device_type || 'Unknown'}</div>
+                                    <div class="text-xs text-gray-500">${review.device_hash ? review.device_hash.substring(0, 8) + '...' : 'No device'}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${submitted}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="event.stopPropagation(); openReviewModal(${review.id})" class="text-blue-600 hover:text-blue-900 mr-3">
                                         <i class="fas fa-eye mr-1"></i> View
                                     </button>
                                 </td>
-                            </tr>
-                        `;
-                    });
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                            `;
+                            
+                            tbody.appendChild(row);
+                        });
+                        
+                        // Update pagination
+                        updatePagination('reviews', data.pagination);
+                        document.getElementById('reviewsShowing').textContent = data.reviews.length;
+                        document.getElementById('reviewsTotal').textContent = data.pagination.total;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading reviews:', error);
+                    document.getElementById('reviewsLoading').innerHTML = `
+                        <td colspan="6" class="px-6 py-8 text-center text-red-500">
+                            <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                            <p>Failed to load reviews</p>
+                        </td>
+                    `;
+                });
         }
-
-        // Load activity history
-        function loadActivityHistory() {
-            fetch('api/admin/activity-history.php', {
-                method: 'GET',
-                headers: {'Content-Type': 'application/json'}
+        
+        function loadDevicesData() {
+            const search = document.getElementById('deviceSearch').value;
+            const filter = document.getElementById('deviceFilter').value;
+            
+            document.getElementById('devicesLoading').style.display = 'table-row';
+            
+            fetch(`ajax/admin.php?action=get_devices&search=${encodeURIComponent(search)}&filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('devicesLoading').style.display = 'none';
+                    
+                    if (data.success) {
+                        const tbody = document.getElementById('devicesTableBody');
+                        tbody.innerHTML = '';
+                        
+                        data.devices.forEach(device => {
+                            // Determine trust score color
+                            let trustColor = 'text-green-600';
+                            let trustClass = 'status-active';
+                            if (device.trust_score < 30) {
+                                trustColor = 'text-red-600';
+                                trustClass = 'status-banned';
+                            } else if (device.trust_score < 60) {
+                                trustColor = 'text-orange-600';
+                                trustClass = 'status-pending';
+                            }
+                            
+                            // Format flags
+                            const flags = [];
+                            if (device.is_suspicious) flags.push('Suspicious');
+                            if (device.suspected_emulator) flags.push('Emulator');
+                            if (device.linked_accounts > 1) flags.push(`Multiple (${device.linked_accounts})`);
+                            
+                            row = document.createElement('tr');
+                            row.className = 'table-row-hover';
+                            
+                            row.innerHTML = `
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-mono text-gray-900">${device.device_hash.substring(0, 12)}...</div>
+                                    <div class="text-xs text-gray-500">${device.id}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full ${device.device_type === 'webview' ? 'bg-purple-100 text-purple-800' : device.device_type === 'android_app' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                        ${device.device_type}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold ${trustColor}">${device.trust_score}</div>
+                                    <div class="w-24 bg-gray-200 rounded-full h-1.5 mt-1">
+                                        <div class="h-1.5 rounded-full ${trustClass.replace('status-', 'bg-')}" style="width: ${device.trust_score}%"></div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${device.linked_accounts}
+                                </td>
+                                <td class="px-6 py-4">
+                                    ${flags.map(flag => `<span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full mr-1 mb-1">${flag}</span>`).join('')}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${moment(device.first_seen).format('MMM D, YYYY')}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="viewDeviceDetails(${device.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <i class="fas fa-search mr-1"></i> Details
+                                    </button>
+                                    ${device.is_suspicious ? `
+                                        <button onclick="trustDevice(${device.id})" class="text-green-600 hover:text-green-900">
+                                            <i class="fas fa-check mr-1"></i> Trust
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            `;
+                            
+                            tbody.appendChild(row);
+                        });
+                        
+                        document.getElementById('devicesTotal').textContent = data.total;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading devices:', error);
+                });
+        }
+        
+        function loadUsersData(page = 1) {
+            currentPage.users = page;
+            const search = document.getElementById('userSearch').value;
+            const filter = document.getElementById('userFilter').value;
+            
+            document.getElementById('usersLoading').style.display = 'table-row';
+            
+            fetch(`ajax/admin.php?action=get_users&page=${page}&search=${encodeURIComponent(search)}&filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('usersLoading').style.display = 'none';
+                    
+                    if (data.success) {
+                        const tbody = document.getElementById('usersTableBody');
+                        tbody.innerHTML = '';
+                        
+                        data.users.forEach(user => {
+                            // Determine status
+                            let status = 'Active';
+                            let statusClass = 'status-active';
+                            if (user.is_banned) {
+                                status = 'Banned';
+                                statusClass = 'status-banned';
+                            } else if (user.earning_multiplier < 1) {
+                                status = 'Limited';
+                                statusClass = 'status-limited';
+                            } else if (user.risk_score > 70) {
+                                status = 'Review';
+                                statusClass = 'status-review';
+                            }
+                            
+                            // Determine risk color
+                            let riskColor = 'text-green-600';
+                            if (user.risk_score >= 85) {
+                                riskColor = 'text-red-600';
+                            } else if (user.risk_score >= 70) {
+                                riskColor = 'text-orange-600';
+                            }
+                            
+                            row = document.createElement('tr');
+                            row.className = 'table-row-hover';
+                            
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${user.id}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">${escapeHtml(user.username)}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${escapeHtml(user.email)}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold ${riskColor}">${user.risk_score}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="${statusClass}">${status}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${user.device_count || 0}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${moment(user.created_at).format('MMM D, YYYY')}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="viewUserDetails(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </button>
+                                    ${user.is_banned ? `
+                                        <button onclick="unbanUser(${user.id})" class="text-green-600 hover:text-green-900">
+                                            <i class="fas fa-unlock mr-1"></i> Unban
+                                        </button>
+                                    ` : `
+                                        <button onclick="banUser(${user.id})" class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-ban mr-1"></i> Ban
+                                        </button>
+                                    `}
+                                </td>
+                            `;
+                            
+                            tbody.appendChild(row);
+                        });
+                        
+                        // Update pagination
+                        updatePagination('users', data.pagination);
+                        document.getElementById('usersShowing').textContent = data.users.length;
+                        document.getElementById('usersTotal').textContent = data.pagination.total;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                });
+        }
+        
+        function loadActivityLog() {
+            fetch('ajax/admin.php?action=get_activity')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const container = document.getElementById('activityLog');
+                        container.innerHTML = '';
+                        
+                        data.activities.forEach(activity => {
+                            // Determine icon and color based on type
+                            let icon = 'fa-info-circle';
+                            let color = 'text-blue-500';
+                            let bgColor = 'bg-blue-50';
+                            
+                            if (activity.type.includes('block') || activity.type.includes('ban')) {
+                                icon = 'fa-ban';
+                                color = 'text-red-500';
+                                bgColor = 'bg-red-50';
+                            } else if (activity.type.includes('review') || activity.type.includes('pending')) {
+                                icon = 'fa-clipboard-check';
+                                color = 'text-yellow-500';
+                                bgColor = 'bg-yellow-50';
+                            } else if (activity.type.includes('login')) {
+                                icon = 'fa-sign-in-alt';
+                                color = 'text-green-500';
+                                bgColor = 'bg-green-50';
+                            }
+                            
+                            const item = document.createElement('div');
+                            item.className = `flex items-start p-3 rounded-lg ${bgColor}`;
+                            
+                            item.innerHTML = `
+                                <div class="flex-shrink-0 mt-1">
+                                    <i class="fas ${icon} ${color}"></i>
+                                </div>
+                                <div class="ml-3 flex-1">
+                                    <div class="text-sm text-gray-900">${escapeHtml(activity.message)}</div>
+                                    <div class="mt-1 flex items-center text-xs text-gray-500">
+                                        <span>${moment(activity.timestamp).format('MMM D, h:mm A')}</span>
+                                        <span class="mx-2">•</span>
+                                        <span>IP: ${activity.ip}</span>
+                                        ${activity.user_id ? `<span class="mx-2">•</span><span>User ID: ${activity.user_id}</span>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            container.appendChild(item);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading activity log:', error);
+                });
+        }
+        
+        function loadRiskChartData(period) {
+            fetch(`ajax/admin.php?action=get_risk_chart&period=${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        riskChart.data.datasets[0].data = data.data;
+                        riskChart.update();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading risk chart:', error);
+                });
+        }
+        
+        function loadFraudChartData() {
+            fetch('ajax/admin.php?action=get_fraud_chart')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        fraudChart.data.datasets[0].data = data.data;
+                        fraudChart.update();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading fraud chart:', error);
+                });
+        }
+        
+        function openReviewModal(reviewId) {
+            currentReviewId = reviewId;
+            
+            fetch(`ajax/admin.php?action=get_review_details&id=${reviewId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const modal = document.getElementById('modalContent');
+                        
+                        modal.innerHTML = `
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Left column -->
+                                <div>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-3">User Information</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Username</label>
+                                            <div class="mt-1 text-sm text-gray-900">${escapeHtml(data.review.username)}</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                                            <div class="mt-1 text-sm text-gray-900">${escapeHtml(data.review.email)}</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                            <div class="mt-1 text-sm text-gray-900">${escapeHtml(data.review.phone || 'Not provided')}</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Risk Score</label>
+                                            <div class="mt-1">
+                                                <span class="text-xl font-bold ${data.review.risk_score >= 85 ? 'text-red-600' : data.review.risk_score >= 70 ? 'text-orange-600' : 'text-yellow-600'}">${data.review.risk_score}</span>
+                                                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                    <div class="h-2 rounded-full ${data.review.risk_score >= 85 ? 'bg-red-600' : data.review.risk_score >= 70 ? 'bg-orange-600' : 'bg-yellow-600'}" style="width: ${data.review.risk_score}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4 class="text-lg font-medium text-gray-900 mt-6 mb-3">Reason for Review</h4>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <p class="text-sm text-gray-700">${escapeHtml(data.review.reason)}</p>
+                                        <div class="mt-2 text-xs text-gray-500">
+                                            Context: ${escapeHtml(data.review.context)} | 
+                                            Submitted: ${moment(data.review.created_at).format('MMM D, YYYY h:mm A')}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Right column -->
+                                <div>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-3">Device Information</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Device Type</label>
+                                            <div class="mt-1">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${data.review.device_type === 'webview' ? 'bg-purple-100 text-purple-800' : data.review.device_type === 'android_app' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                                    ${data.review.device_type || 'Unknown'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Device Hash</label>
+                                            <div class="mt-1 font-mono text-sm text-gray-900 break-all">${data.review.device_hash}</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">User Agent</label>
+                                            <div class="mt-1 text-xs text-gray-900 font-mono bg-gray-100 p-2 rounded">${escapeHtml(data.review.user_agent || 'Not available')}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4 class="text-lg font-medium text-gray-900 mt-6 mb-3">Risk Factors</h4>
+                                    <div class="space-y-2">
+                                        ${data.review.risk_factors ? Object.entries(data.review.risk_factors).map(([factor, score]) => `
+                                            <div>
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="text-gray-700">${factor.replace(/_/g, ' ').toUpperCase()}</span>
+                                                    <span class="font-medium ${score > 70 ? 'text-red-600' : score > 50 ? 'text-orange-600' : 'text-gray-600'}">${score}</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                                    <div class="h-1.5 rounded-full ${score > 70 ? 'bg-red-600' : score > 50 ? 'bg-orange-600' : 'bg-gray-600'}" style="width: ${score}%"></div>
+                                                </div>
+                                            </div>
+                                        `).join('') : '<p class="text-sm text-gray-500">No risk factors available</p>'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h4 class="text-lg font-medium text-gray-900 mb-3">Admin Notes</h4>
+                                <textarea id="reviewNotes" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Add notes about this review...">${data.review.admin_notes || ''}</textarea>
+                            </div>
+                        `;
+                        
+                        document.getElementById('reviewModal').classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading review details:', error);
+                    alert('Failed to load review details');
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('reviewModal').classList.add('hidden');
+            currentReviewId = null;
+        }
+        
+        function approveReview() {
+            if (!currentReviewId) return;
+            
+            const notes = document.getElementById('reviewNotes').value;
+            
+            fetch('ajax/admin.php?action=approve_review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    review_id: currentReviewId,
+                    notes: notes
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const tableBody = document.getElementById('activityTable');
-                    tableBody.innerHTML = '';
-                    
-                    data.data.forEach(activity => {
-                        const statusClass = `status-${activity.status}`;
-                        const icon = getStatusIcon(activity.status);
-                        
-                        tableBody.innerHTML += `
-                            <tr class="border-b hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-gray-900">${activity.username || 'Unknown'}</td>
-                                <td class="px-6 py-4 text-gray-600 font-mono text-sm">${activity.ip_address}</td>
-                                <td class="px-6 py-4">
-                                    <span class="status-badge ${statusClass}">
-                                        ${icon} ${activity.status}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">${formatDate(activity.login_time)}</td>
-                                <td class="px-6 py-4 text-xs text-gray-500">${truncateText(activity.user_agent, 50)}</td>
-                            </tr>
-                        `;
-                    });
+                    alert('Review approved successfully');
+                    closeModal();
+                    loadAllData();
+                } else {
+                    alert('Failed to approve review: ' + data.message);
                 }
             })
-            .catch(error => console.error('Error:', error));
-        }
-
-        function filterActivityTable() {
-            const searchTerm = document.getElementById('searchActivity').value.toLowerCase();
-            const rows = document.querySelectorAll('#activityTable tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            .catch(error => {
+                console.error('Error approving review:', error);
+                alert('Failed to approve review');
             });
         }
-
-        // Device analysis
-        function loadDeviceAnalysis() {
-            // Yeh API ko implement karna hoga
-            console.log('Device analysis loading...');
+        
+        function rejectReview() {
+            if (!currentReviewId) return;
+            
+            const notes = document.getElementById('reviewNotes').value;
+            
+            if (!confirm('Are you sure you want to reject this review? This will ban the user.')) {
+                return;
+            }
+            
+            fetch('ajax/admin.php?action=reject_review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    review_id: currentReviewId,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Review rejected and user banned');
+                    closeModal();
+                    loadAllData();
+                } else {
+                    alert('Failed to reject review: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error rejecting review:', error);
+                alert('Failed to reject review');
+            });
         }
-
-        // Helper functions
-        function getStatusIcon(status) {
-            const icons = {
-                'success': '<i class="fas fa-check-circle"></i>',
-                'failed': '<i class="fas fa-times-circle"></i>',
-                'banned': '<i class="fas fa-ban"></i>',
-                'logout': '<i class="fas fa-sign-out-alt"></i>'
-            };
-            return icons[status] || '';
+        
+        function trustDevice(deviceId) {
+            if (!confirm('Are you sure you want to mark this device as trusted?')) {
+                return;
+            }
+            
+            fetch('ajax/admin.php?action=trust_device', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    device_id: deviceId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Device marked as trusted');
+                    loadDevicesData();
+                } else {
+                    alert('Failed to trust device: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error trusting device:', error);
+                alert('Failed to trust device');
+            });
         }
-
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleString();
+        
+        function banUser(userId) {
+            if (!confirm('Are you sure you want to ban this user?')) {
+                return;
+            }
+            
+            const reason = prompt('Enter ban reason:');
+            if (!reason) return;
+            
+            fetch('ajax/admin.php?action=ban_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    reason: reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User banned successfully');
+                    loadUsersData();
+                } else {
+                    alert('Failed to ban user: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error banning user:', error);
+                alert('Failed to ban user');
+            });
         }
-
-        function truncateText(text, length) {
-            if (!text) return 'N/A';
-            return text.length > length ? text.substring(0, length) + '...' : text;
+        
+        function unbanUser(userId) {
+            if (!confirm('Are you sure you want to unban this user?')) {
+                return;
+            }
+            
+            fetch('ajax/admin.php?action=unban_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User unbanned successfully');
+                    loadUsersData();
+                } else {
+                    alert('Failed to unban user: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error unbanning user:', error);
+                alert('Failed to unban user');
+            });
         }
-
+        
+        function viewDeviceDetails(deviceId) {
+            // Open device details in new tab or modal
+            window.open(`?page=device_details&id=${deviceId}`, '_blank');
+        }
+        
         function viewUserDetails(userId) {
-            alert('User details modal will open here');
-            // Yeh function implement kar sakte ho
+            // Open user details in new tab or modal
+            window.open(`?page=user_details&id=${userId}`, '_blank');
         }
-
-        // Initial load
-        window.addEventListener('load', function() {
-            loadSuspiciousUsers();
-        });
+        
+        function saveSettings() {
+            const settings = {
+                monitor_threshold: parseInt(document.getElementById('monitorThreshold').value),
+                review_threshold: parseInt(document.getElementById('reviewThreshold').value),
+                block_threshold: parseInt(document.getElementById('blockThreshold').value),
+                weights: {
+                    device: parseInt(document.getElementById('weightDeviceInput').value),
+                    emulator: parseInt(document.getElementById('weightEmulatorInput').value),
+                    behavior: parseInt(document.getElementById('weightBehaviorInput').value),
+                    velocity: parseInt(document.getElementById('weightVelocityInput').value),
+                    pattern: parseInt(document.getElementById('weightPatternInput').value)
+                }
+            };
+            
+            fetch('ajax/admin.php?action=save_settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Settings saved successfully');
+                } else {
+                    alert('Failed to save settings: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving settings:', error);
+                alert('Failed to save settings');
+            });
+        }
+        
+        function resetSettings() {
+            if (!confirm('Are you sure you want to reset all settings to default?')) {
+                return;
+            }
+            
+            // Reset to default values
+            document.getElementById('monitorThreshold').value = 30;
+            document.getElementById('monitorValue').textContent = '30';
+            document.getElementById('reviewThreshold').value = 70;
+            document.getElementById('reviewValue').textContent = '70';
+            document.getElementById('blockThreshold').value = 85;
+            document.getElementById('blockValue').textContent = '85';
+            
+            document.getElementById('weightDeviceInput').value = 30;
+            document.getElementById('weightDevice').textContent = '30%';
+            document.getElementById('weightEmulatorInput').value = 25;
+            document.getElementById('weightEmulator').textContent = '25%';
+            document.getElementById('weightBehaviorInput').value = 20;
+            document.getElementById('weightBehavior').textContent = '20%';
+            document.getElementById('weightVelocityInput').value = 15;
+            document.getElementById('weightVelocity').textContent = '15%';
+            document.getElementById('weightPatternInput').value = 10;
+            document.getElementById('weightPattern').textContent = '10%';
+            
+            alert('Settings reset to default values');
+        }
+        
+        function refreshData() {
+            loadAllData();
+        }
+        
+        function exportData() {
+            fetch('ajax/admin.php?action=export_report')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `security-report-${moment().format('YYYY-MM-DD')}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Error exporting data:', error);
+                    alert('Failed to export report');
+                });
+        }
+        
+        function exportDevices() {
+            const search = document.getElementById('deviceSearch').value;
+            const filter = document.getElementById('deviceFilter').value;
+            
+            fetch(`ajax/admin.php?action=export_devices&search=${encodeURIComponent(search)}&filter=${filter}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `devices-${moment().format('YYYY-MM-DD')}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error('Error exporting devices:', error);
+                    alert('Failed to export device list');
+                });
+        }
+        
+        function updatePagination(type, pagination) {
+            const container = document.getElementById(type + 'Pagination');
+            container.innerHTML = '';
+            
+            if (pagination.total_pages <= 1) return;
+            
+            // Previous button
+            if (pagination.current_page > 1) {
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'px-3 py-1 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50';
+                prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                prevBtn.onclick = () => {
+                    if (type === 'reviews') loadReviewsData(pagination.current_page - 1);
+                    else if (type === 'users') loadUsersData(pagination.current_page - 1);
+                };
+                container.appendChild(prevBtn);
+            }
+            
+            // Page numbers
+            const start = Math.max(1, pagination.current_page - 2);
+            const end = Math.min(pagination.total_pages, start + 4);
+            
+            for (let i = start; i <= end; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-3 py-1 rounded-lg text-sm font-medium ${i === pagination.current_page ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => {
+                    if (type === 'reviews') loadReviewsData(i);
+                    else if (type === 'users') loadUsersData(i);
+                };
+                container.appendChild(pageBtn);
+            }
+            
+            // Next button
+            if (pagination.current_page < pagination.total_pages) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'px-3 py-1 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50';
+                nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                nextBtn.onclick = () => {
+                    if (type === 'reviews') loadReviewsData(pagination.current_page + 1);
+                    else if (type === 'users') loadUsersData(pagination.current_page + 1);
+                };
+                container.appendChild(nextBtn);
+            }
+        }
+        
+        function updateLastUpdated() {
+            document.getElementById('lastUpdated').textContent = 'Just now';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
     </script>
 </body>
 </html>

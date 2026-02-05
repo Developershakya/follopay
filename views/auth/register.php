@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php include 'header.php'; ?>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="asserts/js/toast.js"></script>
     <title>Register - EarnApp</title>
 </head>
 <body>
@@ -20,13 +21,6 @@
         <!-- Registration Form -->
         <div class="p-6">
             <form id="registerForm" class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">Full Name</label>
-                    <input type="text" name="name" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="Enter your full name" required>
-                </div>
-
                 <div>
                     <label class="block text-gray-700 mb-2">Username</label>
                     <input type="text" name="username" id="usernameInput"
@@ -47,7 +41,7 @@
                     <input type="tel" name="phone" id="phoneInput"
                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
                            placeholder="10 digit phone number" maxlength="10">
-                    <p class="text-sm text-gray-600 mt-1">Exactly 10 digits (numbers only)</p>
+                    <p class="text-sm text-gray-600 mt-1">valid number (valid 10 digits)</p>
                 </div>
                 
                 <div>
@@ -61,14 +55,7 @@
                             <i id="registerPasswordIcon" class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="mt-2 text-sm text-gray-600">
-                        <p>Password must contain:</p>
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li>At least 6 characters</li>
-                            <li>One uppercase letter</li>
-                            <li>One number</li>
-                        </ul>
-                    </div>
+
                 </div>
                 
                 <div>
@@ -95,15 +82,6 @@
                     </label>
                 </div>
                 
-                <!-- Security Notice -->
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div class="flex">
-                        <i class="fas fa-shield-alt text-yellow-500 mr-3 mt-1"></i>
-                        <p class="text-sm text-yellow-800">
-                            Your information is secure with us. We never share your data with third parties.
-                        </p>
-                    </div>
-                </div>
                 
                 <!-- Submit Button -->
                 <button type="submit" 
@@ -119,35 +97,20 @@
                     <a href="?page=login" class="text-blue-600 font-bold hover:text-blue-800">Sign In</a>
                 </p>
             </div>
-        </div>
-        
-        <!-- Benefits -->
-        <div class="bg-gray-50 p-6 border-t">
-            <h3 class="font-bold text-gray-800 mb-3 text-center">Why Join EarnApp?</h3>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                    <span class="text-sm">Easy Earnings</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                    <span class="text-sm">Instant Withdrawal</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                    <span class="text-sm">24/7 Support</span>
-                </div>
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
-                    <span class="text-sm">Secure Platform</span>
-                </div>
+                                    <div class="text-center mt-4">
+            <a href="?page=help"
+            class="text-sm text-gray-500 hover:text-blue-600 flex items-center justify-center gap-2">
+            <i class="fas fa-circle-question"></i>
+            Need help?
+            </a>
             </div>
         </div>
+        
+
     </div>
 </div>
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-4 right-4 space-y-3 z-50"></div>
+
 
 <script>
     // Phone number input - only numbers allowed, max 10 digits
@@ -196,46 +159,11 @@
         }
     }
 
-    // Toast notification function
-    function showToast(message, type = 'info', duration = 3000) {
-        const toastContainer = document.getElementById('toastContainer');
-        
-        const toast = document.createElement('div');
-        toast.className = `flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg text-white animate-fade-in ${
-            type === 'success' ? 'bg-green-500' :
-            type === 'error' ? 'bg-red-500' :
-            type === 'warning' ? 'bg-yellow-500' :
-            'bg-blue-500'
-        }`;
-        
-        let icon = 'fa-info-circle';
-        if (type === 'success') icon = 'fa-check-circle';
-        if (type === 'error') icon = 'fa-exclamation-circle';
-        if (type === 'warning') icon = 'fa-exclamation-triangle';
-        
-        toast.innerHTML = `
-            <i class="fas ${icon}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" class="ml-auto hover:opacity-80">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        toastContainer.appendChild(toast);
-        
-        // Auto remove after duration
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    }
-
+    
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Basic validation
-        const name = this.elements.name.value.trim();
         const username = this.elements.username.value.trim();
         const email = this.elements.email.value.trim();
         const phone = this.elements.phone.value.trim();
@@ -243,48 +171,49 @@
         const confirmPassword = this.elements.confirm_password.value;
         
         // Frontend validation
-        if (!name) {
-            showToast('Full name is required', 'error');
-            return;
-        }
-        
         if (username.length < 3) {
-            showToast('Username must be at least 3 characters', 'error');
+            showToast('Username must be at least 3 characters', 3000, 'error');
             return;
         }
         
         if (!email) {
-            showToast('Email is required', 'error');
+            showToast('Email is required', 3000, 'error');
             return;
         }
         
         if (!phone || phone.length !== 10) {
-            showToast('Phone number must be exactly 10 digits', 'error');
+            showToast('Phone number must be exactly 10 digits', 3000, 'error');
+            return;
+        }
+        
+        // Indian phone number validation (6,7,8,9 start)
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+            showToast('Please insert valid phone number', 3000, 'error');
             return;
         }
         
         if (password !== confirmPassword) {
-            showToast('Passwords do not match!', 'error');
+            showToast('Passwords do not match!', 3000, 'error');
             return;
         }
         
         if (password.length < 6) {
-            showToast('Password must be at least 6 characters', 'error');
+            showToast('Password must be at least 6 characters', 3000, 'error');
             return;
         }
         
         if (!/[A-Z]/.test(password)) {
-            showToast('Password must contain at least one uppercase letter', 'error');
+            showToast('Password must contain at least one uppercase letter', 3000, 'error');
             return;
         }
         
         if (!/[0-9]/.test(password)) {
-            showToast('Password must contain at least one number', 'error');
+            showToast('Password must contain at least one number', 3000, 'error');
             return;
         }
         
         if (!this.elements.terms.checked) {
-            showToast('You must accept the terms and conditions', 'error');
+            showToast('You must accept the terms and conditions', 3000, 'error');
             return;
         }
         
@@ -308,7 +237,7 @@
             const data = await response.json();
             
             if (data.success) {
-                showToast(data.message || 'Account created successfully!', 'success');
+                showToast(data.message || 'Account created successfully!', 2500, 'success');
                 
                 // Redirect to dashboard after successful registration
                 setTimeout(() => {
@@ -321,19 +250,19 @@
                     Object.keys(data.errors).forEach(field => {
                         const error = data.errors[field];
                         if (Array.isArray(error)) {
-                            error.forEach(msg => showToast(msg, 'error'));
+                            error.forEach(msg => showToast(msg, 3000, 'error'));
                         } else {
-                            showToast(error, 'error');
+                            showToast(error, 3000, 'error');
                         }
                     });
                 } else {
                     // Show general error message
-                    showToast(data.message || 'Registration failed', 'error');
+                    showToast(data.message || 'Registration failed', 3000, 'error');
                 }
             }
         } catch (error) {
             console.error('Error:', error);
-            showToast('Network error. Please try again.', 'error');
+            showToast('Network error. Please try again.', 3000, 'error');
         } finally {
             // Reset button state
             submitBtn.innerHTML = originalText;

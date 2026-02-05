@@ -1,7 +1,7 @@
 <?php
 /**
  * FolloPay - Earn Money Page
- * SEO Optimized version with all existing functionality
+ * Android WebView Optimized Version
  */
 require_once 'config/constants.php';
 require_once 'controllers/AuthController.php';
@@ -17,37 +17,63 @@ if (!$auth->checkAuth()) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#3b82f6">
+    
     <title>Earn Money From Reviews - FolloPay | Get Paid for App Reviews</title>
     <meta name="description" content="Earn genuine money by writing reviews on Google Play Store and app reviews. Get paid for authentic feedback on apps and services with FolloPay.">
     <meta name="keywords" content="earn money from reviews, app reviews payment, review rewards, get paid for app reviews, review earning jobs">
     <meta name="robots" content="index, follow">
     <meta name="author" content="FolloPay">
     
-    <!-- Open Graph Tags for Social Sharing -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Earn Money From Reviews - FolloPay">
     <meta property="og:description" content="Get paid for writing authentic app reviews. Flexible earning opportunities for everyone.">
     <meta property="og:url" content="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?>/?page=earn">
     
-    <!-- Canonical URL -->
     <link rel="canonical" href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?>/?page=earn">
     
     <?php include 'header.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="asserts/js/toast.js"></script>
     <style>
+        * {
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+        
+        input, textarea, button {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: 100%;
+        }
+        
+        body {
+            background-color: #f9fafb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
         .drag-over {
             background-color: #dbeafe !important;
             border-color: #3b82f6 !important;
         }
         
         .phone-mockup {
-            border: 12px solid #1f2937;
-            border-radius: 40px;
+            border: 8px solid #1f2937;
+            border-radius: 30px;
             overflow: hidden;
             position: relative;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 280px;
         }
         
         .phone-mockup::before {
@@ -56,14 +82,14 @@ if (!$auth->checkAuth()) {
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 40%;
-            height: 25px;
+            width: 35%;
+            height: 20px;
             background: #1f2937;
-            border-radius: 0 0 20px 20px;
+            border-radius: 0 0 15px 15px;
             z-index: 10;
         }
 
-        /* SEO Content - Hidden but indexed */
+        /* SEO Content */
         .seo-content {
             font-size: 0;
             height: 0;
@@ -73,11 +99,136 @@ if (!$auth->checkAuth()) {
         .seo-content * {
             font-size: inherit;
         }
+
+        /* WebView Optimizations */
+        button {
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .drop-zone {
+            border: 2px dashed #86efac;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background-color: white;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #dcfce7;
+            border-color: #16a34a;
+        }
+
+        /* Smooth animations for mobile */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Touch-friendly spacing */
+        @media (max-width: 768px) {
+            button, a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .text-sm {
+                font-size: 0.875rem;
+            }
+
+            .p-4 {
+                padding: 1rem;
+            }
+
+            .p-5 {
+                padding: 1.25rem;
+            }
+        }
+
+        /* Loading animation */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Safe area insets for notch */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+                padding-top: max(0px, env(safe-area-inset-top));
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Dialog overlay */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: 1rem;
+        }
+
+        .dialog-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Text selection colors */
+        ::selection {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        ::-webkit-selection {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
 
-<!-- SEO Content Section (Hidden but indexed by Google) -->
+<!-- SEO Content -->
 <div class="seo-content">
     <h1>Earn Real Money Writing Reviews on FolloPay</h1>
     <p>Join thousands of users who are making genuine income by sharing their honest opinions about apps and services. Whether you're looking to earn some extra cash or build a consistent side income, FolloPay makes the process straightforward and rewarding.</p>
@@ -98,33 +249,38 @@ if (!$auth->checkAuth()) {
     <p>Yes, FolloPay is a trusted platform where you can earn real money by writing genuine reviews. We have transparent payment records and thousands of verified users making real money on our platform.</p>
 </div>
 
-<!-- Desktop Content -->
-<div class="hidden md:block">
-    <div class="max-w-5xl mx-auto py-8 px-4">
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold mb-2 text-gray-800">Earn Money</h1>
-            <p class="text-gray-600 mb-8">Complete tasks and earn money by posting comments on apps</p>
-            
-            <div id="earnContainer">
-                <div class="text-center py-12">
-                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i>
-                    <p class="mt-4 text-gray-600">Loading earn page...</p>
+<!-- Main Container -->
+<div class="min-h-screen bg-gray-50">
+    <!-- Desktop View -->
+    <div class="hidden md:block">
+        <div class="max-w-6xl mx-auto py-8 px-4">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h1 class="text-4xl font-bold mb-3 text-gray-800">Earn Money</h1>
+                <p class="text-gray-600 mb-8 text-lg">Complete tasks and earn money by posting comments on apps</p>
+                
+                <div id="earnContainer" class="min-h-96">
+                    <div class="flex flex-col items-center justify-center py-16">
+                        <div class="spinner mb-4" style="width: 32px; height: 32px; border-width: 4px;"></div>
+                        <p class="text-gray-600">Loading earn page...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Mobile Content -->
-<div class="md:hidden">
-    <div class="p-4 pb-8">
-        <h1 class="text-2xl font-bold mb-2 text-gray-800">Earn Money</h1>
-        <p class="text-gray-600 mb-6">Complete tasks and earn money</p>
-        
-        <div id="mobileEarnContainer">
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i>
-                <p class="mt-3 text-gray-600">Loading...</p>
+    <!-- Mobile View -->
+    <div class="md:hidden pb-20">
+        <div class="bg-gray-50">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+                <h1 class="text-2xl font-bold text-gray-800">Earn Money</h1>
+                <p class="text-sm text-gray-600">Complete tasks and earn</p>
+            </div>
+            
+            <div id="mobileEarnContainer" class="p-4">
+                <div class="flex flex-col items-center justify-center py-16">
+                    <div class="spinner mb-4" style="width: 28px; height: 28px; border-width: 3px;"></div>
+                    <p class="text-gray-600 text-sm">Loading...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -138,6 +294,13 @@ let isExpired = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadEarnPage();
+    
+    // Prevent default context menu
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+        }
+    });
 });
 
 function loadEarnPage() {
@@ -155,16 +318,7 @@ function loadEarnPage() {
         })
         .catch(err => {
             console.error('Error:', err);
-            const container = document.getElementById('earnContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div class="text-center py-12">
-                        <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-3"></i>
-                        <p class="text-red-600 font-medium text-lg">Error loading page</p>
-                        <p class="text-gray-600 text-sm mt-2">Please refresh the page</p>
-                    </div>
-                `;
-            }
+            showError('Error loading page');
         });
 }
 
@@ -172,301 +326,255 @@ function renderAssignment(assignment, earnContainer, mobileEarnContainer) {
     currentAssignmentId = assignment.id;
     const timeLeft = Math.max(0, 300 - assignment.seconds_elapsed);
     
-    // Desktop view
-    if (earnContainer) {
-        earnContainer.innerHTML = `
-            <div class="space-y-8">
-                <!-- Task Details -->
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-8">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-6">Current Task</h2>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Left Column -->
-                        <div class="space-y-6">
-                            <div>
-                                <p class="text-sm text-gray-600 font-semibold mb-2">App Name</p>
-                                <p class="font-bold text-2xl text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
-                            </div>
-                            
-                            <div>
-                                <p class="text-sm text-gray-600 font-semibold mb-2">App Link</p>
-                                <a href="${assignment.app_link || '#'}" target="_blank" title="Open app on Google Play Store" class="inline-block">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-                                         alt="Google Play Store Badge" 
-                                         class="h-10 hover:scale-110 transition-transform duration-200">
-                                </a>
-                            </div>
-                            
-                            <div>
-                                <p class="text-sm text-gray-600 font-semibold mb-2">Reward Amount</p>
-                                <p class="font-bold text-3xl text-green-600">₹${parseFloat(assignment.price).toFixed(2)}</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-sm text-gray-600 font-semibold mb-3">Assigned Comment</p>
-                                <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md" id="desktopCommentBox">
-                                    ${escapeHtml(assignment.comment_text || 'No comment')}
-                                </div>
-                                <button onclick="copyComment('${assignment.comment_text.replace(/'/g, "\\'")}')" 
-                                        title="Copy comment to clipboard"
-                                        class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold hover:bg-blue-700 transition-colors duration-200">
-                                    <i class="fas fa-copy"></i> Copy Comment
-                                </button>
-                            </div>
-                            
-                            <div class="bg-white rounded-lg p-4 border border-gray-200">
-                                <p class="text-sm text-gray-600 font-semibold mb-2">Time Remaining</p>
-                                <p id="timer" class="font-bold text-3xl text-red-600" aria-label="Time remaining">05:00</p>
-                            </div>
-                            
-                            <button onclick="refreshComment(${assignment.id}, ${assignment.post_id})" 
-                                    id="refreshBtn" title="Refresh to get a new comment"
-                                    class="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold hover:bg-yellow-600 transition-colors duration-200 hidden">
-                                <i class="fas fa-sync-alt"></i> Refresh Comment
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="desktopMessage" class="mt-6 text-center hidden p-4 rounded-lg" role="status" aria-live="polite"></div>
-                </div>
-                
-                <!-- Warning Box -->
-                <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl mt-1" aria-hidden="true"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-yellow-800 text-lg mb-2">Important - Screenshot Requirements</h3>
-                            <p class="text-sm text-yellow-700 mb-3">
-                                Your screenshot must clearly show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">both the App Name AND the Assigned Comment in the same frame</span>. 
-                            </p>
-                            <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
-                                <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
-                                <strong>How to:</strong> Open the app → paste the comment → take screenshot showing app name in header and your comment posted below. Payment will be rejected if both are not visible.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    
-                    <!-- Sample Screenshot -->
-                    <div class="bg-gradient-to-b from-blue-50 to-white border border-blue-200 rounded-xl p-6 md:p-8">
-                        <h3 class="font-bold text-blue-800 text-lg mb-6 text-center md:text-left">
-                            ✓ Sample Screenshot (What We're Looking For)
-                        </h3>
-
-                        <div class="flex justify-center">
-                            <div class="phone-mockup w-64 sm:w-72 bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-300">
-
-                                <!-- Portrait Image -->
-                                <div class="bg-black">
-                                    <img 
-                                        src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
-                                        alt="Sample screenshot showing app name and comment visible in the same frame"
-                                        class="w-full aspect-[9/16] object-cover"
-                                        loading="lazy"
-                                    >
-                                </div>
-
-                                <!-- Footer -->
-                                <div class="bg-gray-50 p-4">
-                                    <p class="text-xs text-green-600 font-semibold text-center">
-                                        <i class="fas fa-check-circle mr-1" aria-hidden="true"></i>
-                                        Perfect! Both visible
-                                    </p>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Upload Section -->
-                    <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-300 rounded-xl p-6 md:p-8">
-                        <h3 class="font-bold text-green-800 text-lg mb-6 text-center md:text-left">
-                            Upload Your Screenshot
-                        </h3>
-
-                        <div 
-                            id="desktopDropZone"
-                            class="border-2 border-dashed border-green-400 rounded-xl p-8 md:p-10 text-center cursor-pointer transition-all duration-300 hover:bg-white"
-                            ondrop="handleDrop(event)" 
-                            ondragover="handleDragOver(event)"
-                            ondragleave="handleDragLeave(event)"
-                            onclick="document.getElementById('desktopFileInput').click()"
-                            role="button"
-                            tabindex="0"
-                            aria-label="Drop zone to upload screenshot"
-                        >
-                            <i class="fas fa-cloud-upload-alt text-5xl text-green-500 mb-4 block" aria-hidden="true"></i>
-                            <p class="text-lg font-bold text-gray-800">
-                                Drag and drop your screenshot here
-                            </p>
-                            <p class="text-sm text-gray-600 mt-2">
-                                or click to select file
-                            </p>
-
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                class="hidden" 
-                                id="desktopFileInput" 
-                                onchange="handleFileSelect(event, '${assignment.id}')"
-                                aria-label="Select screenshot file"
-                            >
-                        </div>
-
-                        <div id="desktopMessage" class="mt-6 text-center hidden p-4 rounded-lg" role="status" aria-live="polite"></div>
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-        
-        // Add click handler to drop zone
-        document.getElementById('desktopDropZone').onclick = () => {
-            document.getElementById('desktopFileInput').click();
-        };
-    }
+    const desktopHTML = createDesktopAssignmentHTML(assignment);
+    if (earnContainer) earnContainer.innerHTML = desktopHTML;
     
-    // Mobile view
-    if (mobileEarnContainer) {
-        mobileEarnContainer.innerHTML = `
-            <div class="space-y-6">
-                <!-- Task Details -->
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5">
-                    <h2 class="text-xl font-bold text-blue-800 mb-4">Current Task</h2>
-                    
-                    <div class="space-y-4 mb-4">
+    const mobileHTML = createMobileAssignmentHTML(assignment);
+    if (mobileEarnContainer) mobileEarnContainer.innerHTML = mobileHTML;
+    
+    // Attach drop zone handlers
+    attachDropZoneHandlers('desktopDropZone', assignment.id);
+    attachDropZoneHandlers('mobileDropZone', assignment.id);
+    
+    // Attach file input handlers
+    const desktopFileInput = document.getElementById('desktopFileInput');
+    const mobileFileInput = document.getElementById('mobileFileInput');
+    if (desktopFileInput) desktopFileInput.onchange = (e) => handleFileSelect(e, assignment.id);
+    if (mobileFileInput) mobileFileInput.onchange = (e) => handleFileSelect(e, assignment.id);
+    
+    startTimer(timeLeft, assignment.id);
+    
+    window.addEventListener('beforeunload', () => {
+        releaseComment(assignment.id);
+    });
+}
+
+function createDesktopAssignmentHTML(assignment) {
+    return `
+        <div class="space-y-8">
+            <!-- Task Details -->
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-8">
+                <h2 class="text-2xl font-bold text-blue-800 mb-8">Current Task</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
                         <div>
-                            <p class="text-xs text-gray-600 font-semibold mb-1">App Name</p>
-                            <p class="font-bold text-lg text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
+                            <p class="text-sm text-gray-600 font-semibold mb-2">App Name</p>
+                            <p class="font-bold text-2xl text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
                         </div>
                         
                         <div>
-                            <p class="text-xs text-gray-600 font-semibold mb-1">App Link</p>
-                            <a href="${assignment.app_link || '#'}" target="_blank" title="Open app on Google Play Store" class="inline-block">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-                                     alt="Google Play Store Badge"
-                                     class="h-8 hover:scale-105 transition-transform">
+                            <p class="text-sm text-gray-600 font-semibold mb-2">App Link</p>
+                            <a href="${assignment.app_link || '#'}" target="_blank" rel="noopener noreferrer" class="inline-block">
+                                <img src="${getBadgeByLink(assignment.app_link).img}" 
+                                     alt="${getBadgeByLink(assignment.app_link).alt}"
+                                     class="h-10 hover:scale-110 transition-transform duration-200" loading="lazy">
                             </a>
                         </div>
                         
                         <div>
-                            <p class="text-xs text-gray-600 font-semibold mb-1">Reward</p>
-                            <p class="font-bold text-2xl text-green-600">₹${parseFloat(assignment.price).toFixed(2)}</p>
+                            <p class="text-sm text-gray-600 font-semibold mb-2">Reward Amount</p>
+                            <p class="font-bold text-3xl text-green-600">₹${parseFloat(assignment.price).toFixed(2)}</p>
                         </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-600 font-semibold mb-3">Assigned Comment</p>
+                            <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md max-h-40 overflow-y-auto">
+                                ${escapeHtml(assignment.comment_text || 'No comment')}
+                            </div>
+                            <button onclick="copyComment('${escapeForJS(assignment.comment_text)}')" class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold hover:bg-blue-700 active:bg-blue-800 transition-colors">
+                                <i class="fas fa-copy mr-2"></i> Copy Comment
+                            </button>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <p class="text-sm text-gray-600 font-semibold mb-2">Time Remaining</p>
+                            <p id="timer" class="font-bold text-3xl text-red-600">05:00</p>
+                        </div>
+                        
+                        <button onclick="refreshComment(${assignment.id}, ${assignment.post_id})" id="refreshBtn" class="w-full bg-yellow-500 text-white py-3 rounded-lg font-bold hover:bg-yellow-600 active:bg-yellow-700 transition-colors hidden">
+                            <i class="fas fa-sync-alt mr-2"></i> Refresh Comment
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Warning Box -->
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 mb-2">Screenshot Requirements</h3>
+                        <p class="text-sm text-yellow-700 mb-2">
+                            Screenshot must show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">App Name AND Comment together</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                            <i class="fas fa-info-circle mr-2"></i>Payment rejected if both not visible
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                        <i class="fas fa-info-circle mr-2"></i>App Must be Download then reviewed
+                        </p>
+                                                 
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Sample Screenshot -->
+                <div class="bg-gradient-to-b from-blue-50 to-white border border-blue-200 rounded-xl p-8 flex flex-col items-center">
+                    <h3 class="font-bold text-blue-800 text-lg mb-6">✓ Sample Screenshot</h3>
+                    <div class="phone-mockup">
+                        <div class="bg-black">
+                            <img src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
+                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-cover" loading="lazy">
+                        </div>
+                        <div class="bg-gray-50 p-3">
+                            <p class="text-xs text-green-600 font-semibold text-center">
+                                <i class="fas fa-check-circle mr-1"></i>Perfect! Both visible
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-300 rounded-xl p-8">
+                    <h3 class="font-bold text-green-800 text-lg mb-6">Upload Your Screenshot</h3>
+                    
+                    <div id="desktopDropZone" class="drop-zone border-green-400 bg-white hover:bg-green-50 transition-colors">
+                        <div class="mb-4">
+                            <i class="fas fa-cloud-upload-alt text-6xl text-green-500 mb-4 block animate-bounce"></i>
+                        </div>
+                        <p class="text-lg font-bold text-gray-800 mb-2">Drag and Drop Your Screenshot Here</p>
+                        <p class="text-sm text-gray-600 mb-4">or click below to select from your device</p>
+                          <p class="text-xs text-gray-500 mt-3">JPG, PNG, GIF, WebP (Max 5MB)</p>
+                        <input type="file" id="desktopFileInput" accept="image/*">
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function createMobileAssignmentHTML(assignment) {
+    return `
+        <div class="space-y-4">
+            <!-- Task Details -->
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                <h2 class="text-lg font-bold text-blue-800 mb-4">Current Task</h2>
+                
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <p class="text-xs text-gray-600 font-semibold mb-1">App Name</p>
+                        <p class="font-bold text-lg text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
                     </div>
                     
                     <div>
-                        <p class="text-xs text-gray-600 font-semibold mb-2">Assigned Comment</p>
-                        <div class="bg-gray-900 text-white p-3 rounded-lg font-mono text-xs break-words" id="mobileCommentBox">
-                            ${escapeHtml(assignment.comment_text || 'No comment')}
-                        </div>
-                        <button onclick="copyComment('${assignment.comment_text.replace(/'/g, "\\'")}')" 
-                                title="Copy comment to clipboard"
-                                class="w-full bg-blue-600 text-white py-2 rounded-lg mt-3 font-bold text-sm hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-copy" aria-hidden="true"></i> Copy
-                        </button>
+                        <p class="text-xs text-gray-600 font-semibold mb-1">App Link</p>
+                        <a href="${assignment.app_link || '#'}" target="_blank" rel="noopener noreferrer" class="inline-block">
+                            <img src="${getBadgeByLink(assignment.app_link).img}" 
+                                 alt="${getBadgeByLink(assignment.app_link).alt}"
+                                 class="h-8 hover:scale-110 transition-transform" loading="lazy">
+                        </a>
                     </div>
                     
-                    <div class="bg-white rounded-lg p-3 border border-gray-200 mt-4">
-                        <p class="text-xs text-gray-600 font-semibold mb-1">Time Remaining</p>
-                        <p id="mobileTimer" class="font-bold text-2xl text-red-600" aria-label="Time remaining">05:00</p>
+                    <div>
+                        <p class="text-xs text-gray-600 font-semibold mb-1">Reward</p>
+                        <p class="font-bold text-xl text-green-600">₹${parseFloat(assignment.price).toFixed(2)}</p>
                     </div>
-                    
-                    <button onclick="refreshComment(${assignment.id}, ${assignment.post_id})" 
-                            id="mobileRefreshBtn" title="Refresh to get a new comment"
-                            class="w-full bg-yellow-500 text-white py-2 rounded-lg mt-3 font-bold text-sm hover:bg-yellow-600 transition-colors hidden">
-                        <i class="fas fa-sync-alt" aria-hidden="true"></i> Refresh
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-xs text-gray-600 font-semibold mb-2">Assigned Comment</p>
+                    <div class="bg-gray-900 text-white p-3 rounded-lg font-mono text-xs break-words max-h-32 overflow-y-auto">
+                        ${escapeHtml(assignment.comment_text || 'No comment')}
+                    </div>
+                    <button onclick="copyComment('${escapeForJS(assignment.comment_text)}')" class="w-full bg-blue-600 text-white py-2 rounded-lg mt-2 font-bold text-sm hover:bg-blue-700 active:bg-blue-800">
+                        <i class="fas fa-copy mr-1"></i> Copy
                     </button>
-                    
-                    <div id="mobileMessage" class="mt-4 text-center hidden p-3 rounded-lg text-sm" role="status" aria-live="polite"></div>
                 </div>
                 
-                <!-- Warning Box -->
-                <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-4">
-                    <div class="flex items-start gap-3">
-                        <i class="fas fa-exclamation-triangle text-yellow-600 text-lg flex-shrink-0 mt-0.5" aria-hidden="true"></i>
-                        <div>
-                            <h3 class="font-bold text-yellow-800 text-sm mb-2">Screenshot Requirements</h3>
-                            <p class="text-xs text-yellow-700 mb-2">
-                                Screenshot must show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">App Name AND Comment together</span>
-                            </p>
-                            <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
-                                <i class="fas fa-info-circle mr-1" aria-hidden="true"></i>Payment rejected if both not visible
-                            </p>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 mb-4">
+                    <p class="text-xs text-gray-600 font-semibold mb-1">Time Remaining</p>
+                    <p id="mobileTimer" class="font-bold text-2xl text-red-600">05:00</p>
                 </div>
                 
-                <!-- Sample Screenshot -->
-                <div class="bg-gradient-to-b from-blue-50 to-white border border-blue-200 rounded-xl p-6 md:p-8">
-                    <h3 class="font-bold text-blue-800 text-lg mb-6 text-center md:text-left">
-                        ✓ Sample Screenshot (What We're Looking For)
-                    </h3>
-
-                    <div class="flex justify-center">
-                        <div class="phone-mockup w-64 sm:w-72 bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-300">
-
-                            <!-- Portrait Image -->
-                            <div class="bg-black">
-                                <img 
-                                    src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
-                                    alt="Sample screenshot showing app name and comment visible in the same frame"
-                                    class="w-full aspect-[9/16] object-cover"
-                                    loading="lazy"
-                                >
-                            </div>
-
-                            <!-- Footer -->
-                            <div class="bg-gray-50 p-4">
-                                <p class="text-xs text-green-600 font-semibold text-center">
-                                    <i class="fas fa-check-circle mr-1" aria-hidden="true"></i>
-                                    Perfect! Both visible
-                                </p>
-                            </div>
-
-                        </div>
+                <button onclick="refreshComment(${assignment.id}, ${assignment.post_id})" id="mobileRefreshBtn" class="w-full bg-yellow-500 text-white py-2 rounded-lg font-bold text-sm hover:bg-yellow-600 active:bg-yellow-700 hidden">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+            </div>
+            
+            <!-- Warning Box -->
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                <div class="flex items-start gap-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-base flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 text-sm mb-1">Screenshot Requirements</h3>
+                        <p class="text-xs text-yellow-700 mb-1">
+                            Show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">App Name & Comment</span> together
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
+                            <i class="fas fa-info-circle mr-1"></i>Payment rejected if not both visible
+                        </p>
+                         <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                        <i class="fas fa-info-circle mr-2"></i>App Must be Download then reviewed
+                        </p>
                     </div>
-                </div>
-                
-                <!-- Upload Section -->
-                <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-300 rounded-xl p-5">
-                    <h3 class="font-bold text-green-800 text-sm mb-4">Upload Screenshot</h3>
-                    
-                    <div id="mobileDropZone" class="border-3 border-dashed border-green-400 rounded-xl p-6 text-center cursor-pointer transition-all"
-                         ondrop="handleDrop(event)" 
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         role="button"
-                         tabindex="0"
-                         aria-label="Drop zone to upload screenshot">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-green-500 mb-3 block" aria-hidden="true"></i>
-                        <p class="text-sm font-bold text-gray-800">Tap to select</p>
-                        <p class="text-xs text-gray-600">or drag file here</p>
-                        <input type="file" accept="image/*" class="hidden" id="mobileFileInput" onchange="handleFileSelect(event, '${assignment.id}')" aria-label="Select screenshot file">
-                    </div>
-                    
-                    <div id="mobileMessage" class="mt-4 text-center hidden p-3 rounded-lg text-sm" role="status" aria-live="polite"></div>
                 </div>
             </div>
-        `;
-        
-        // Add click handler to drop zone
-        document.getElementById('mobileDropZone').onclick = () => {
-            document.getElementById('mobileFileInput').click();
-        };
-    }
+            
+            <!-- Sample Screenshot -->
+            <div class="bg-gradient-to-b from-blue-50 to-white border border-blue-200 rounded-lg p-4">
+                <h3 class="font-bold text-blue-800 text-sm mb-4 text-center">✓ Sample Screenshot</h3>
+                <div class="flex justify-center">
+                    <div class="phone-mockup">
+                        <div class="bg-black">
+                            <img src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
+                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-cover" loading="lazy">
+                        </div>
+                        <div class="bg-gray-50 p-2">
+                            <p class="text-xs text-green-600 font-semibold text-center">
+                                <i class="fas fa-check-circle mr-1"></i>Perfect
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upload Section -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-300 rounded-lg p-4">
+                <h3 class="font-bold text-green-800 text-sm mb-4">Upload Your Screenshot</h3>
+                
+                <div id="mobileDropZone" class="drop-zone border-green-400 bg-white hover:bg-green-50 transition-colors">
+                    <div class="mb-3">
+                        <i class="fas fa-cloud-upload-alt text-5xl text-green-500 mb-3 block animate-bounce"></i>
+                    </div>
+                    <p class="text-base font-bold text-gray-800 mb-2">Tap to Upload</p>
+                    <p class="text-xs text-gray-600 mb-3">or drag your screenshot here</p>
+                    <p class="text-xs text-gray-500 mt-3">JPG, PNG, GIF, WebP (Max 5MB)</p>
+                    <input type="file" id="mobileFileInput" accept="image/*">
+                </div>
+
+
+            </div>
+        </div>
+    `;
+}
+
+function attachDropZoneHandlers(elementId, assignmentId) {
+    const zone = document.getElementById(elementId);
+    if (!zone) return;
     
-    startTimer(timeLeft, '${assignment.id}');
-    
-    window.addEventListener('beforeunload', () => {
-        releaseComment(assignment.id);
+    zone.addEventListener('dragover', handleDragOver);
+    zone.addEventListener('dragleave', handleDragLeave);
+    zone.addEventListener('drop', handleDrop);
+    zone.addEventListener('click', () => {
+        const fileInput = document.getElementById(elementId === 'desktopDropZone' ? 'desktopFileInput' : 'mobileFileInput');
+        if (fileInput) fileInput.click();
     });
 }
 
@@ -485,36 +593,26 @@ function handleDragLeave(e) {
 function handleDrop(e) {
     e.preventDefault();
     e.stopPropagation();
-    
-    const dropZone = e.currentTarget;
-    dropZone.classList.remove('drag-over');
+    e.currentTarget.classList.remove('drag-over');
     
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        const file = files[0];
-        
-        if (!file.type.startsWith('image/')) {
-            alert('Please drop an image file');
-            return;
-        }
-        
-        uploadScreenshot(file);
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+        uploadScreenshot(files[0]);
     }
 }
 
 function handleFileSelect(e, assignmentId) {
     if (e.target.files.length > 0) {
-        uploadScreenshot(e.target.files[0], assignmentId);
+        uploadScreenshot(e.target.files[0]);
     }
 }
 
-function uploadScreenshot(file, assignmentId) {
+function uploadScreenshot(file) {
     if (isExpired) {
-        alert('Time is up! Please refresh to get a new comment.');
+        showToast('Time is up! Please refresh to get a new comment.', 3000, 'warning');
         return;
     }
     
-    // Show upload dialog
     showUploadDialog();
     
     const formData = new FormData();
@@ -529,40 +627,30 @@ function uploadScreenshot(file, assignmentId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show success message in dialog
-            updateUploadDialog(true, data.message || 'Upload successful! Please wait...');
-            
+            updateUploadDialog(true, data.message || 'Upload successful!');
             clearInterval(timerInterval);
             clearInterval(heartbeatInterval);
-            
-            // Redirect after 3 seconds
             setTimeout(() => {
                 closeUploadDialog();
                 window.location.href = '?page=dashboard';
-            }, 3000);
+            }, 2000);
         } else {
-            // Show error message in dialog
-            updateUploadDialog(false, data.message || 'Failed to submit');
+            updateUploadDialog(false, data.message || 'Upload failed');
         }
     })
     .catch(err => {
         console.error('Error:', err);
-        updateUploadDialog(false, 'An error occurred. Please try again.');
+        updateUploadDialog(false, 'An error occurred');
     });
 }
 
 function showUploadDialog() {
-    // Create dialog container if it doesn't exist
-    let dialogContainer = document.getElementById('uploadDialogContainer');
-    if (!dialogContainer) {
-        dialogContainer = document.createElement('div');
-        dialogContainer.id = 'uploadDialogContainer';
-        document.body.appendChild(dialogContainer);
-    }
-    
-    dialogContainer.innerHTML = `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+    const container = document.createElement('div');
+    container.id = 'uploadDialog';
+    container.className = 'dialog-overlay';
+    container.innerHTML = `
+        <div class="dialog-content">
+            <div class="text-center">
                 <div class="mb-6">
                     <i class="fas fa-cloud-upload-alt text-5xl text-blue-500 mb-4 block animate-bounce" aria-hidden="true"></i>
                     <h2 class="text-2xl font-bold text-gray-800 mb-2">Uploading Image</h2>
@@ -577,76 +665,50 @@ function showUploadDialog() {
             </div>
         </div>
     `;
+    document.body.appendChild(container);
 }
 
-function updateUploadDialog(isSuccess, message) {
-    const dialogContainer = document.getElementById('uploadDialogContainer');
-    if (!dialogContainer) return;
+function updateUploadDialog(success, message) {
+    const dialog = document.getElementById('uploadDialog');
+    if (!dialog) return;
     
-    let icon, bgColor, textColor, title;
+    const icon = success ? 'fas fa-check-circle text-green-600' : 'fas fa-exclamation-circle text-red-600';
+    const title = success ? 'Success!' : 'Failed!';
     
-    if (isSuccess) {
-        icon = 'fas fa-check-circle';
-        bgColor = 'bg-green-100';
-        textColor = 'text-green-700';
-        title = 'Success!';
-    } else {
-        icon = 'fas fa-exclamation-circle';
-        bgColor = 'bg-red-100';
-        textColor = 'text-red-700';
-        title = 'Failed!';
-    }
-    
-    dialogContainer.innerHTML = `
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
-                <div class="mb-6">
-                    <div class="${bgColor} rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                        <i class="${icon} text-4xl ${textColor}" aria-hidden="true"></i>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">${title}</h2>
-                </div>
-                <div id="dialogMessage" class="text-gray-700 text-sm mb-6 ${textColor} font-semibold">
-                    ${message}
-                </div>
-                ${isSuccess ? `
-                    <p class="text-gray-500 text-xs">Redirecting to dashboard in 3 seconds...</p>
-                ` : `
-                    <button onclick="closeUploadDialog()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                        Close
-                    </button>
-                `}
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <div class="text-center">
+                <i class="${icon} text-4xl mb-4 block"></i>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">${title}</h2>
+                <p class="text-sm text-gray-600 mb-4">${message}</p>
+                ${success ? '' : `<button onclick="closeUploadDialog()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700">Close</button>`}
             </div>
         </div>
     `;
+    
+    if (success) {
+        setTimeout(closeUploadDialog, 2000);
+    }
 }
 
 function closeUploadDialog() {
-    const dialogContainer = document.getElementById('uploadDialogContainer');
-    if (dialogContainer) {
-        dialogContainer.remove();
-    }
+    const dialog = document.getElementById('uploadDialog');
+    if (dialog) dialog.remove();
 }
 
 function startTimer(seconds, assignmentId) {
     let timeLeft = seconds;
     isExpired = false;
     
-    function updateTimer() {
-        const minutes = Math.floor(timeLeft / 60);
-        const secs = timeLeft % 60;
-        const timeString = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const updateTimer = () => {
+        const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const secs = (timeLeft % 60).toString().padStart(2, '0');
+        const timeStr = `${mins}:${secs}`;
         
-        const timerElement = document.getElementById('timer');
-        const mobileTimerElement = document.getElementById('mobileTimer');
-        
-        if (timerElement) timerElement.textContent = timeString;
-        if (mobileTimerElement) mobileTimerElement.textContent = timeString;
-        
-        if (timeLeft <= 30) {
-            if (timerElement) timerElement.classList.add('animate-pulse');
-            if (mobileTimerElement) mobileTimerElement.classList.add('animate-pulse');
-        }
+        const timer = document.getElementById('timer');
+        const mobileTimer = document.getElementById('mobileTimer');
+        if (timer) timer.textContent = timeStr;
+        if (mobileTimer) mobileTimer.textContent = timeStr;
         
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -655,20 +717,12 @@ function startTimer(seconds, assignmentId) {
             
             const refreshBtn = document.getElementById('refreshBtn');
             const mobileRefreshBtn = document.getElementById('mobileRefreshBtn');
-            
             if (refreshBtn) refreshBtn.classList.remove('hidden');
             if (mobileRefreshBtn) mobileRefreshBtn.classList.remove('hidden');
-            
-            const messageDiv = document.getElementById('desktopMessage') || document.getElementById('mobileMessage');
-            if (messageDiv) {
-                messageDiv.className = 'mt-6 text-center p-4 rounded-lg bg-red-100 text-red-700 font-semibold';
-                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2" aria-hidden="true"></i> Time is up! Click "Refresh Comment" to get a new comment.';
-                messageDiv.classList.remove('hidden');
-            }
         } else {
             timeLeft--;
         }
-    }
+    };
     
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
@@ -677,97 +731,145 @@ function startTimer(seconds, assignmentId) {
         if (!isExpired) {
             fetch('ajax/posts.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `action=heartbeat&assignment_id=${assignmentId}`
-            }).catch(err => console.error('Heartbeat error:', err));
+            }).catch(() => {});
         }
     }, 30000);
 }
 
 function copyComment(text) {
     navigator.clipboard.writeText(text).then(() => {
-        alert('Comment copied to clipboard!');
-    }).catch(err => {
+        showToast('Comment copied!', 2000, 'success');
+    }).catch(() => {
         const textarea = document.createElement('textarea');
         textarea.value = text;
         document.body.appendChild(textarea);
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        alert('Comment copied to clipboard!');
+        showToast('Comment copied!', 2000, 'success');
     });
 }
 
-function refreshComment(assignmentId, postId) {
-    if (confirm('Get a new comment? Your current comment will be released.')) {
-        fetch('ajax/posts.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `action=refresh_comment&assignment_id=${assignmentId}&post_id=${postId}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.assignment) {
-                clearInterval(timerInterval);
-                clearInterval(heartbeatInterval);
-                loadEarnPage();
-            } else {
-                alert(data.message || 'Failed to refresh comment');
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            alert('An error occurred. Please try again.');
-        });
+function showConfirmDialog(title, message, onConfirm, onCancel) {
+    let dialog = document.getElementById('confirmDialog');
+    if (dialog) dialog.remove();
+
+    dialog = document.createElement('div');
+    dialog.id = 'confirmDialog';
+    document.body.appendChild(dialog);
+
+    dialog.style.cssText = `
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:rgba(0,0,0,0.5);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:999998;
+        padding:16px;
+    `;
+
+    dialog.innerHTML = `
+        <div style="background:white;border-radius:12px;padding:24px;max-width:320px;width:100%;box-shadow:0 20px 25px -5px rgba(0, 0, 0, 0.3)">
+            <h3 style="margin:0 0 8px 0;font-size:18px;font-weight:bold;color:#1f2937">${title}</h3>
+            <p style="margin:0 0 24px 0;font-size:14px;color:#4b5563;line-height:1.5">${message}</p>
+            <div style="display:flex;gap:12px;justify-content:flex-end">
+                <button id="confirmCancel"
+                    style="padding:10px 20px;border:2px solid #d1d5db;background:white;color:#1f2937;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">
+                    Cancel
+                </button>
+                <button id="confirmOk"
+                    style="padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    `;
+
+    // ✅ SAFE EVENT BINDING (design unchanged)
+    dialog.querySelector('#confirmOk').addEventListener('click', () => {
+        dialog.remove();
+        if (typeof onConfirm === 'function') onConfirm();
+    });
+
+    dialog.querySelector('#confirmCancel').addEventListener('click', () => {
+        dialog.remove();
+        if (typeof onCancel === 'function') onCancel();
+    });
+}
+
+
+function confirmDialogAction() {
+    closeConfirmDialog();
+    if (window.confirmDialogCallback) {
+        window.confirmDialogCallback();
     }
+}
+
+function closeConfirmDialog() {
+    let dialog = document.getElementById('confirmDialog');
+    if (dialog) {
+        dialog.remove();
+    }
+    window.confirmDialogCallback = null;
+    window.cancelDialogCallback = null;
+}
+
+function refreshComment(assignmentId, postId) {
+    showConfirmDialog(
+        'Get New Comment?',
+        'Your current comment will be released and you\'ll get a new one.',
+        function() {
+            fetch('ajax/posts.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=refresh_comment&assignment_id=${assignmentId}&post_id=${postId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.assignment) {
+                    clearInterval(timerInterval);
+                    clearInterval(heartbeatInterval);
+                    showToast('Comment refreshed', 2000, 'success');
+                    loadEarnPage();
+                } else {
+                    showToast(data.message || 'Failed to refresh comment', 3000, 'error');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                showToast('An error occurred', 3000, 'error');
+            });
+        }
+    );
 }
 
 function releaseComment(assignmentId) {
     if (assignmentId) {
-        navigator.sendBeacon('ajax/posts.php', 
-            `action=release_comment&assignment_id=${assignmentId}`
-        );
+        navigator.sendBeacon('ajax/posts.php', `action=release_comment&assignment_id=${assignmentId}`);
     }
 }
 
 function getBadgeByLink(appLink) {
-    if (!appLink) return {
-        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
-        alt: 'Get it on Google Play'
-    };
-
+    if (!appLink) return { img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg', alt: 'Get it on Google Play' };
+    
     appLink = appLink.toLowerCase();
-
-    if (appLink.includes('youtube.com') || appLink.includes('youtu.be')) {
-        return {
-            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png',
-            alt: 'Subscribe on YouTube'
-        };
+    
+    if (appLink.includes('youtube')) {
+        return { img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png', alt: 'Subscribe on YouTube' };
     }
-
-    if (appLink.includes('maps') || appLink.includes('google.com/maps')) {
-        return {
-            img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png',
-            alt: 'Rate us on Google Reviews'
-        };
+    if (appLink.includes('maps')) {
+        return { img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png', alt: 'Rate us on Google Reviews' };
     }
-
-    if (appLink.includes('playstore')) {
-        return {
-            img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
-            alt: 'Get it on Google Play'
-        };
-    }
-
-    // fallback
-    return {
-        img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
-        alt: 'Open link'
-    };
+    
+    return { img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg', alt: 'Get it on Google Play' };
 }
 
 function loadAvailablePosts() {
@@ -777,48 +879,27 @@ function loadAvailablePosts() {
     fetch('ajax/posts.php?action=get_available')
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.posts && data.posts.length > 0) {
-                const posts = data.posts;
-                let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+            if (data.success && data.posts?.length > 0) {
+                let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
                 
-                posts.forEach(post => {
-                    const appName = post.app_name || 'Unknown App';
+                data.posts.forEach(post => {
+                    const appName = post.app_name || 'Unknown';
                     const appLink = post.app_link || '#';
-                    const badge = getBadgeByLink(appLink);
                     const price = parseFloat(post.price) || 0;
-                    const commentsAvailable = post.available_comments || 0;
-                    const postId = post.id;
                     
-
                     html += `
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col">
-                            <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-5 border-b border-gray-200">
-                                <h3 class="font-bold text-lg text-gray-800 mb-2">${escapeHtml(appName)}</h3>
-                                    <a href="${appLink}" target="_blank" class="inline-block mb-3">
-                                        <img src="${badge.img}"
-                                            alt="${badge.alt}"
-                                            class="h-10 hover:scale-110 transition-transform duration-200">
-                                    </a>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-2xl font-bold text-green-600">₹${price.toFixed(2)}</span>
-                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded text-xs font-semibold">Active</span>
-                                </div>
+                        <div class="bg-white border border-gray-200 rounded-lg shadow hover:shadow-lg transition-shadow p-5">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate">${escapeHtml(appName)}</h3>
+                            <a href="${appLink}" target="_blank" rel="noopener noreferrer" class="inline-block mb-3">
+                                <img src="${getBadgeByLink(appLink).img}" alt="Store link" class="h-8 hover:scale-110 transition-transform" loading="lazy">
+                            </a>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-2xl font-bold text-green-600">₹${price.toFixed(2)}</span>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
                             </div>
-                            <div class="p-5 flex-1">
-                                <div class="space-y-3">
-                                    <div class="flex items-center text-gray-700">
-                                        <i class="fas fa-clock text-orange-500 mr-3" aria-hidden="true"></i>
-                                        <span>Quick task • ~5 min</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-5 bg-gray-50 border-t border-gray-200">
-                                <button onclick="startEarning(${postId})" 
-                                        title="Start earning by completing this task"
-                                        class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-play" aria-hidden="true"></i> Start Earning
-                                </button>
-                            </div>
+                            <button onclick="startEarning(${post.id})" class="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 active:bg-green-700 transition-colors text-sm">
+                                <i class="fas fa-play mr-1"></i> Start
+                            </button>
                         </div>
                     `;
                 });
@@ -828,36 +909,34 @@ function loadAvailablePosts() {
                 if (mobileEarnContainer) mobileEarnContainer.innerHTML = html;
             } else {
                 const noTasksHTML = `
-                    <div class="text-center py-16">
-                        <i class="fas fa-inbox text-6xl text-gray-300 mb-4" aria-hidden="true"></i>
-                        <p class="text-gray-600 text-xl font-medium">No available tasks at the moment</p>
-                        <p class="text-gray-500 text-sm mt-2">Check back later for new earning opportunities</p>
+                    <div class="text-center py-12">
+                        <i class="fas fa-inbox text-5xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-600 font-medium">No tasks available</p>
+                        <p class="text-gray-500 text-sm mt-1">Check back later</p>
                     </div>
                 `;
                 if (earnContainer) earnContainer.innerHTML = noTasksHTML;
                 if (mobileEarnContainer) mobileEarnContainer.innerHTML = noTasksHTML;
             }
         })
-        .catch(err => console.error('Error loading posts:', err));
+        .catch(err => {
+            console.error('Error:', err);
+            showError('Failed to load tasks');
+        });
 }
 
 function startEarning(postId) {
-    if (!postId) {
-        alert('Invalid task');
-        return;
-    }
-
-    const buttons = document.querySelectorAll(`button[onclick="startEarning(${postId})"]`);
+    if (!postId) return showToast('Invalid task', 2000, 'error');
+    
+    const buttons = document.querySelectorAll(`button[onclick*="startEarning(${postId})"]`);
     buttons.forEach(btn => {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i> Starting...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Starting...';
     });
 
     fetch('ajax/posts.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `action=assign_comment&post_id=${postId}`
     })
     .then(response => response.json())
@@ -865,19 +944,18 @@ function startEarning(postId) {
         if (data.success) {
             window.location.href = '?page=earn';
         } else {
-            alert(data.message || 'Failed to start task. Please try again.');
+            showToast(data.message || 'Failed to start', 3000, 'error');
             buttons.forEach(btn => {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-play mr-2" aria-hidden="true"></i> Start Earning';
+                btn.innerHTML = '<i class="fas fa-play mr-1"></i> Start';
             });
         }
     })
-    .catch(err => {
-        console.error('Error:', err);
-        alert('An error occurred. Please try again.');
+    .catch(() => {
+        showToast('An error occurred', 3000, 'error');
         buttons.forEach(btn => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-play mr-2" aria-hidden="true"></i> Start Earning';
+            btn.innerHTML = '<i class="fas fa-play mr-1"></i> Start';
         });
     });
 }
@@ -886,6 +964,23 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function escapeForJS(text) {
+    return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+}
+
+function showError(message) {
+    const container = document.getElementById('earnContainer') || document.getElementById('mobileEarnContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-12">
+                <i class="fas fa-exclamation-triangle text-5xl text-red-400 mb-3"></i>
+                <p class="text-red-600 font-medium">${message}</p>
+                <button onclick="location.reload()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">Retry</button>
+            </div>
+        `;
+    }
 }
 </script>
 
