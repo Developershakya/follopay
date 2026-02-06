@@ -359,7 +359,7 @@ class PostController {
         
         return [
             'success' => true,
-            'message' => 'Screenshot submitted successfully! It will be reviewed within 24-48 hours.',
+            'message' => 'Screenshot submitted successfully! It will be reviewed within 7 business days.',
             'assignment_id' => $assignmentId,
             'screenshot_url' => $cloudinaryUrl
         ];

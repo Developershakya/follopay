@@ -119,6 +119,16 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1.5em;
+  padding-right: 2.5rem;
+}
+
     </style>
 
     <title>Pending Screenshot Verification</title>
@@ -276,16 +286,41 @@ class="webview-overlay webview-hidden bg-black bg-opacity-90 flex flex-col p-0">
     </div>
 </div>
 
-<!-- ================= REJECT MODAL ================= -->
+<!-- ================= REJECT MODAL (IMPROVED) ================= -->
 <div id="rejectBox"
 class="webview-overlay webview-hidden bg-black bg-opacity-60 flex items-center justify-center p-4">
 
   <div class="modal-content">
     <h3 style="font-size:18px;font-weight:bold;color:#1f2937;margin:0 0 16px 0">Rejection Reason</h3>
     
+    <!-- Predefined Reasons Dropdown -->
+    <select id="rejectReasonSelect"
+            style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box;color:#1f2937;cursor:pointer"
+            onchange="handleRejectReasonChange(this.value)">
+        <option value="">-- Select from predefined reasons --</option>
+        <option value="Fake / Edited Screenshot">🖼️ Fake / Edited Screenshot</option>
+        <option value="Wrong Task Completed">❌ Wrong Task Completed</option>
+        <option value="Screenshot Not Clear">👁️ Screenshot Not Clear</option>
+        <option value="App Not Installed Properly">📱 App Not Installed Properly</option>
+        <option value="Duplicate Submission">📋 Duplicate Submission</option>
+        <option value="Wrong Image Uploaded">🔄 Wrong Image Uploaded</option>
+        <option value="Comment Assignment Not Match">💬 Comment Assignment Not Match</option>
+        <option value="Comment Not Showing">📝 Comment Not Showing</option>
+        <option value="App Name Not Showing">📛 App Name Not Showing</option>
+        <option value="App Not Installed">⚠️ App Not Installed</option>
+        <option value="other">✏️ Other (Write Manually)</option>
+    </select>
+
+    <!-- Custom Text Input (Initially Hidden) -->
     <textarea id="rejectReason" 
-              placeholder="Enter reason for rejection..." 
-              style="height:120px;margin-bottom:20px"></textarea>
+              placeholder="Enter detailed reason for rejection..." 
+              style="height:120px;margin-bottom:20px;display:none"></textarea>
+
+    <!-- Selected Reason Display -->
+    <div id="selectedReasonDisplay" style="background:#f3f4f6;border:2px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:16px;display:none">
+      <p style="font-size:12px;color:#6b7280;margin:0 0 4px 0">Selected Reason:</p>
+      <p id="selectedReasonText" style="color:#1f2937;font-weight:600;margin:0;word-break:break-word"></p>
+    </div>
 
     <div style="display:flex;gap:12px;justify-content:flex-end">
       <button onclick="closeRejectBox()" style="padding:10px 20px;border:2px solid #d1d5db;background:white;color:#1f2937;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:all 0.2s;min-height:auto;min-width:auto">
@@ -303,6 +338,7 @@ class="webview-overlay webview-hidden bg-black bg-opacity-60 flex items-center j
         let currentImagePath = null;
         let currentAssignmentData = null;
         let mobileDrawerOpen = false;
+        let selectedRejectReason = ''; // Track selected reason
 
         // ================= LOAD DATA =================
         function loadPendingScreenshots() {
@@ -506,27 +542,72 @@ class="webview-overlay webview-hidden bg-black bg-opacity-60 flex items-center j
                 });
         }
 
-        // ================= REJECT =================
+        // ================= REJECT (IMPROVED) =================
+        function handleRejectReasonChange(value) {
+            const textarea = document.getElementById('rejectReason');
+            const display = document.getElementById('selectedReasonDisplay');
+            const displayText = document.getElementById('selectedReasonText');
+            
+            if (value === 'other') {
+                // Show textarea for custom reason
+                textarea.style.display = 'block';
+                textarea.value = '';
+                textarea.focus();
+                display.style.display = 'none';
+                selectedRejectReason = '';
+            } else if (value === '') {
+                // No selection
+                textarea.style.display = 'none';
+                display.style.display = 'none';
+                selectedRejectReason = '';
+            } else {
+                // Predefined reason selected
+                textarea.style.display = 'none';
+                selectedRejectReason = value;
+                displayText.textContent = value;
+                display.style.display = 'block';
+            }
+        }
+
         function openRejectBox() {
             const r = document.getElementById('rejectBox');
             r.classList.remove('webview-hidden');
             r.classList.add('webview-show');
+            
+            // Reset form
+            document.getElementById('rejectReasonSelect').value = '';
             document.getElementById('rejectReason').value = '';
-            document.getElementById('rejectReason').focus();
+            document.getElementById('rejectReason').style.display = 'none';
+            document.getElementById('selectedReasonDisplay').style.display = 'none';
+            selectedRejectReason = '';
         }
 
         function closeRejectBox() {
             const r = document.getElementById('rejectBox');
             r.classList.remove('webview-show');
             r.classList.add('webview-hidden');
+            
+            // Reset form
+            document.getElementById('rejectReasonSelect').value = '';
             document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectReason').style.display = 'none';
+            document.getElementById('selectedReasonDisplay').style.display = 'none';
+            selectedRejectReason = '';
         }
 
         function rejectSS() {
-            const reason = document.getElementById('rejectReason').value.trim();
+            let reason = '';
+            
+            if (selectedRejectReason) {
+                // Predefined reason
+                reason = selectedRejectReason;
+            } else {
+                // Custom reason
+                reason = document.getElementById('rejectReason').value.trim();
+            }
 
             if (!reason) {
-                showToast('Please enter rejection reason', 2500, 'warning');
+                showToast('Please select or enter rejection reason', 2500, 'warning');
                 return;
             }
 

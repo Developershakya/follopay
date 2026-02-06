@@ -2,157 +2,31 @@
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/Session.php';
 require_once __DIR__ . '/../helpers/Validation.php';
+require_once __DIR__ . '/../helpers/EmailService.php';
 
 class AuthController {
     private $db;
     private $session;
+    private $emailService;
     
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
         $this->session = new Session();
-    }
-    
-    // 📱 Device fingerprint generate karein
-    private function generateDeviceFingerprint() {
-        $ip = $this->getClientIP();
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '';
-        
-        $fingerprint = hash('sha256', $ip . $userAgent . $acceptLanguage);
-        return $fingerprint;
-    }
-    
-    // 🌐 Client ka real IP address nikaalein
-    private function getClientIP() {
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        }
-        return trim($ip);
-    }
-    
-    // 🔍 Check karein same device se kitne accounts hain
-    private function checkDuplicateDevice($userId = null, $phone = null, $email = null) {
-        $fingerprint = $this->generateDeviceFingerprint();
-        $ip = $this->getClientIP();
-        
-        try {
-            // Check 1: Same device/IP se multiple accounts
-            $stmt = $this->db->prepare("
-                SELECT COUNT(DISTINCT dt.user_id) as account_count 
-                FROM device_tracking dt
-                WHERE (dt.device_fingerprint = ? OR dt.ip_address = ?) 
-                AND dt.is_active = 1
-                " . ($userId ? "AND dt.user_id != ?" : ""));
-            
-            if ($userId) {
-                $stmt->execute([$fingerprint, $ip, $userId]);
-            } else {
-                $stmt->execute([$fingerprint, $ip]);
-            }
-            
-            $result = $stmt->fetch();
-            $deviceAccountCount = $result['account_count'] ?? 0;
-            
-            // Check 2: Same phone se multiple accounts
-            $phoneAccountCount = 0;
-            if ($phone) {
-                $stmt = $this->db->prepare("
-                    SELECT COUNT(*) as count FROM users 
-                    WHERE phone = ? " . ($userId ? "AND id != ?" : ""));
-                
-                if ($userId) {
-                    $stmt->execute([$phone, $userId]);
-                } else {
-                    $stmt->execute([$phone]);
-                }
-                
-                $phoneResult = $stmt->fetch();
-                $phoneAccountCount = $phoneResult['count'] ?? 0;
-            }
-            
-            // Check 3: Same email se multiple accounts
-            $emailAccountCount = 0;
-            if ($email) {
-                $stmt = $this->db->prepare("
-                    SELECT COUNT(*) as count FROM users 
-                    WHERE email = ? " . ($userId ? "AND id != ?" : ""));
-                
-                if ($userId) {
-                    $stmt->execute([$email, $userId]);
-                } else {
-                    $stmt->execute([$email]);
-                }
-                
-                $emailResult = $stmt->fetch();
-                $emailAccountCount = $emailResult['count'] ?? 0;
-            }
-            
-            return [
-                'device_duplicates' => $deviceAccountCount,
-                'phone_duplicates' => $phoneAccountCount,
-                'email_duplicates' => $emailAccountCount,
-                'is_suspicious' => ($deviceAccountCount > 0 || $phoneAccountCount > 0)
-            ];
-        } catch (PDOException $e) {
-            return ['device_duplicates' => 0, 'phone_duplicates' => 0, 'email_duplicates' => 0, 'is_suspicious' => false];
-        }
-    }
-    
-    // 💾 Device info track karein (registration ke baad)
-    private function trackDevice($userId) {
-        $fingerprint = $this->generateDeviceFingerprint();
-        $ip = $this->getClientIP();
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        
-        try {
-            $stmt = $this->db->prepare("
-                INSERT INTO device_tracking (user_id, device_fingerprint, ip_address, user_agent, is_active, created_at) 
-                VALUES (?, ?, ?, ?, 1, NOW())
-            ");
-            
-            $stmt->execute([$userId, $fingerprint, $ip, $userAgent]);
-            return true;
-        } catch (PDOException $e) {
-            return false;
-        }
-    }
-    
-    // 📝 Login history store karein
-    private function logLogin($userId, $status = 'success') {
-        $ip = $this->getClientIP();
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        
-        try {
-            $stmt = $this->db->prepare("
-                INSERT INTO login_history (user_id, ip_address, user_agent, status, login_time) 
-                VALUES (?, ?, ?, ?, NOW())
-            ");
-            
-            $stmt->execute([$userId, $ip, $userAgent, $status]);
-            return true;
-        } catch (PDOException $e) {
-            return false;
-        }
+        $this->emailService = new EmailService();
     }
     
     public function register($data) {
         $validation = new Validation();
         
-        // ✅ Validation rules
+        // Validation rules
         $rules = [
             'username' => 'required|min:3|max:50|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            // 👇 Phone: required + only numbers + exactly 10 digits + unique
             'phone' => 'required|regex:/^[0-9]{10}$/|unique:users',
             'confirm_password' => 'required|matches:password'
         ];
 
-        // ❌ Validation failed
         if (!$validation->validate($data, $rules)) {
             return [
                 'success' => false,
@@ -160,63 +34,166 @@ class AuthController {
             ];
         }
 
-        // 🔍 Check karein kya same device/phone se pehle se account hai
-        $duplicateCheck = $this->checkDuplicateDevice(null, $data['phone'], $data['email']);
-        
-        if ($duplicateCheck['is_suspicious']) {
-            return [
-                'success' => false,
-                'message' => 'Multiple accounts detected from your device. Please contact support.',
-                'device_duplicates' => $duplicateCheck['device_duplicates']
-            ];
-        }
-
-        // 🔐 Password hash
+        // Generate OTP
+        $otp = $this->generateOTP();
         $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
-
-        // 🧾 Insert query
+        
+        // Store temporary data with OTP
         $stmt = $this->db->prepare("
-            INSERT INTO users (username, email, password, phone, created_at) 
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO user_otp_verification (email, username, password, phone, otp, otp_expires_at, created_at) 
+            VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), NOW())
         ");
 
         try {
             $stmt->execute([
-                $data['username'],
                 $data['email'],
+                $data['username'],
                 $hashedPassword,
-                $data['phone']
+                $data['phone'],
+                $otp
             ]);
 
-            $userId = $this->db->lastInsertId();
+            // Send OTP via email
+            $emailSent = $this->emailService->sendOTPEmail($data['email'], $data['username'], $otp);
             
-            // 📱 Device ko track karein
-            $this->trackDevice($userId);
-            
-            // 📝 Login history
-            $this->logLogin($userId, 'registration');
-
-            // 🔓 Auto login after registration
-            $this->login([
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'remember' => false
-            ]);
+            if (!$emailSent) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to send OTP. Please try again.'
+                ];
+            }
 
             return [
                 'success' => true,
-                'message' => 'Registration successful!'
+                'message' => 'OTP sent to your email. Please verify to complete registration.',
+                'redirect_to' => 'verify-otp',
+                'email' => $data['email']
             ];
 
         } catch (PDOException $e) {
             return [
                 'success' => false,
                 'message' => 'Registration failed. Please try again.'
-                // production me $e->getMessage() mat dikhana
             ];
         }
     }
 
+    public function verifyOTP($data) {
+        $validation = new Validation();
+        
+        $rules = [
+            'email' => 'required|email',
+            'otp' => 'required|regex:/^[0-9]{6}$/'
+        ];
+        
+        if (!$validation->validate($data, $rules)) {
+            return ['success' => false, 'errors' => $validation->errors()];
+        }
+        
+        // Find OTP record
+        $stmt = $this->db->prepare("
+            SELECT * FROM user_otp_verification 
+            WHERE email = ? AND otp = ? AND otp_expires_at > NOW()
+        ");
+        $stmt->execute([$data['email'], $data['otp']]);
+        $record = $stmt->fetch();
+        
+        if (!$record) {
+            return [
+                'success' => false,
+                'message' => 'Invalid or expired OTP. Please try again or request a new one.'
+            ];
+        }
+        
+        // Insert user into users table
+        $userStmt = $this->db->prepare("
+            INSERT INTO users (username, email, password, phone, created_at) 
+            VALUES (?, ?, ?, ?, NOW())
+        ");
+        
+        try {
+            $userStmt->execute([
+                $record['username'],
+                $record['email'],
+                $record['password'],
+                $record['phone']
+            ]);
+            
+            $userId = $this->db->lastInsertId();
+            
+            // Delete OTP record
+            $deleteStmt = $this->db->prepare("DELETE FROM user_otp_verification WHERE id = ?");
+            $deleteStmt->execute([$record['id']]);
+            
+            // Auto login
+            $this->session->set('user_id', $userId);
+            $this->session->set('username', $record['username']);
+            $this->session->set('role', 'user');
+            $this->session->set('logged_in', true);
+            
+            return [
+                'success' => true,
+                'message' => 'Account created successfully! Welcome to EarnApp'
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'message' => 'Verification failed. Please try again.'
+            ];
+        }
+    }
+
+    public function refreshOTP($email) {
+        // Check if email exists in pending verification
+        $stmt = $this->db->prepare("
+            SELECT * FROM user_otp_verification WHERE email = ?
+        ");
+        $stmt->execute([$email]);
+        $record = $stmt->fetch();
+        
+        if (!$record) {
+            return [
+                'success' => false,
+                'message' => 'Email not found in registration process.'
+            ];
+        }
+        
+        // Generate new OTP
+        $newOtp = $this->generateOTP();
+        
+        // Update OTP
+        $updateStmt = $this->db->prepare("
+            UPDATE user_otp_verification 
+            SET otp = ?, otp_expires_at = DATE_ADD(NOW(), INTERVAL 10 MINUTE)
+            WHERE id = ?
+        ");
+        
+        try {
+            $updateStmt->execute([$newOtp, $record['id']]);
+            
+            // Send new OTP
+            $emailSent = $this->emailService->sendOTPEmail($email, $record['username'], $newOtp);
+            
+            if (!$emailSent) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to send OTP.'
+                ];
+            }
+            
+            return [
+                'success' => true,
+                'message' => 'New OTP sent to your email.'
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to refresh OTP.'
+            ];
+        }
+    }
     
     public function login($data) {
         $validation = new Validation();
@@ -236,53 +213,154 @@ class AuthController {
         $user = $stmt->fetch();
         
         if (!$user || !password_verify($data['password'], $user['password'])) {
-            $this->logLogin(null, 'failed');
             return ['success' => false, 'message' => 'Invalid email or password'];
         }
         
         // Check if banned
         if ($user['is_banned']) {
-            $this->logLogin($user['id'], 'banned');
-            $this->session->set('banned_user', [
-                'username' => $user['username'],
-                'ban_reason' => $user['ban_reason']
-            ]);
-            return ['success' => false, 'banned' => true, 'reason' => $user['ban_reason']];
+            return [
+                'success' => false,
+                'banned' => true,
+                'reason' => $user['ban_reason']
+            ];
         }
-        
-        // 🔍 Check kya koi suspicious activity hai
-        $duplicateCheck = $this->checkDuplicateDevice($user['id']);
         
         // Set session
         $this->session->set('user_id', $user['id']);
         $this->session->set('username', $user['username']);
         $this->session->set('role', $user['role']);
         $this->session->set('logged_in', true);
-        $this->session->set('device_duplicates', $duplicateCheck['device_duplicates']);
         
         // Update last login
         $updateStmt = $this->db->prepare("UPDATE users SET last_active = NOW() WHERE id = ?");
         $updateStmt->execute([$user['id']]);
         
-        // 📝 Log successful login
-        $this->logLogin($user['id'], 'success');
+        return ['success' => true, 'role' => $user['role']];
+    }
+
+    public function forgotPassword($email) {
+        $validation = new Validation();
         
-        // 📱 Track device
-        $this->trackDevice($user['id']);
+        if (!$validation->validate(['email' => $email], ['email' => 'required|email'])) {
+            return [
+                'success' => false,
+                'message' => 'Please provide a valid email.'
+            ];
+        }
         
-        return [
-            'success' => true, 
-            'role' => $user['role'],
-            'device_duplicates' => $duplicateCheck['device_duplicates'],
-            'has_duplicates' => $duplicateCheck['device_duplicates'] > 0
+        // Check if user exists
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            // Don't reveal if email exists (security)
+            return [
+                'success' => true,
+                'message' => 'If this email exists, you will receive password reset instructions.'
+            ];
+        }
+        
+        // Generate reset token
+        $resetToken = bin2hex(random_bytes(32));
+        $hashedToken = hash('sha256', $resetToken);
+        
+        // Store reset token
+        $stmt = $this->db->prepare("
+            UPDATE users 
+            SET password_reset_token = ?, password_reset_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR)
+            WHERE id = ?
+        ");
+        
+        try {
+            $stmt->execute([$hashedToken, $user['id']]);
+            
+            // Send reset email
+            $emailSent = $this->emailService->sendPasswordResetEmail($email, $user['username'], $resetToken);
+            
+            if (!$emailSent) {
+                return [
+                    'success' => true,
+                    'message' => 'If this email exists, you will receive password reset instructions.'
+                ];
+            }
+            
+            return [
+                'success' => true,
+                'message' => 'If this email exists, you will receive password reset instructions.'
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => true,
+                'message' => 'If this email exists, you will receive password reset instructions.'
+            ];
+        }
+    }
+
+    public function resetPassword($data) {
+        $validation = new Validation();
+        
+        $rules = [
+            'token' => 'required',
+            'password' => 'required|min:6',
+            'confirm_password' => 'required|matches:password'
         ];
+        
+        if (!$validation->validate($data, $rules)) {
+            return [
+                'success' => false,
+                'errors' => $validation->errors()
+            ];
+        }
+        
+        // Verify token
+        $hashedToken = hash('sha256', $data['token']);
+        
+        $stmt = $this->db->prepare("
+            SELECT * FROM users 
+            WHERE password_reset_token = ? AND password_reset_expires > NOW()
+        ");
+        $stmt->execute([$hashedToken]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'Invalid or expired reset link.'
+            ];
+        }
+        
+        // Hash new password
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+        
+        // Update password and clear reset token
+        $updateStmt = $this->db->prepare("
+            UPDATE users 
+            SET password = ?, password_reset_token = NULL, password_reset_expires = NULL
+            WHERE id = ?
+        ");
+        
+        try {
+            $updateStmt->execute([$hashedPassword, $user['id']]);
+            
+            // Send confirmation email
+            $this->emailService->sendPasswordResetConfirmation($user['email'], $user['username']);
+            
+            return [
+                'success' => true,
+                'message' => 'Password reset successfully! You can now login with your new password.'
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to reset password. Please try again.'
+            ];
+        }
     }
     
     public function logout() {
-        $userId = $this->session->get('user_id');
-        if ($userId) {
-            $this->logLogin($userId, 'logout');
-        }
         $this->session->destroy();
         return ['success' => true];
     }
@@ -297,7 +375,8 @@ class AuthController {
         }
         
         $userId = $this->session->get('user_id');
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        // ✓ FIXED: Added is_banned column to SELECT query
+        $stmt = $this->db->prepare("SELECT id, username, email, phone, role, created_at, is_banned, ban_reason FROM users WHERE id = ?");
         $stmt->execute([$userId]);
         return $stmt->fetch();
     }
@@ -305,70 +384,9 @@ class AuthController {
     public function isAdmin() {
         return $this->session->get('role') === 'admin';
     }
-    
-    // 👨‍💼 Admin ko info dene ke liye - suspicious users track karein
-    public function getSuspiciousUsers() {
-        if (!$this->isAdmin()) {
-            return ['success' => false, 'message' => 'Unauthorized'];
-        }
-        
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    u.id,
-                    u.username,
-                    u.email,
-                    u.phone,
-                    COUNT(DISTINCT dt.device_fingerprint) as unique_devices,
-                    GROUP_CONCAT(DISTINCT dt.ip_address) as ip_addresses,
-                    MAX(dt.created_at) as last_device_login,
-                    u.created_at
-                FROM users u
-                LEFT JOIN device_tracking dt ON u.id = dt.user_id
-                GROUP BY u.id
-                HAVING unique_devices > 1 OR 
-                       (SELECT COUNT(*) FROM users u2 WHERE u2.phone = u.phone) > 1
-                ORDER BY unique_devices DESC
-            ");
-            
-            $stmt->execute();
-            return ['success' => true, 'data' => $stmt->fetchAll()];
-        } catch (PDOException $e) {
-            return ['success' => false, 'message' => 'Error fetching data'];
-        }
-    }
-    
-    // 🔗 Linked accounts dekhen
-    public function getLinkedAccounts($userId) {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    u.id,
-                    u.username,
-                    u.email,
-                    u.phone,
-                    dt.device_fingerprint,
-                    dt.ip_address,
-                    dt.created_at,
-                    lh.login_time,
-                    lh.status
-                FROM users u
-                INNER JOIN device_tracking dt ON u.id = dt.user_id
-                LEFT JOIN login_history lh ON u.id = lh.user_id
-                WHERE (dt.device_fingerprint IN (
-                    SELECT device_fingerprint FROM device_tracking WHERE user_id = ?
-                ) OR dt.ip_address IN (
-                    SELECT ip_address FROM device_tracking WHERE user_id = ?
-                ))
-                AND u.id != ?
-                ORDER BY dt.created_at DESC
-            ");
-            
-            $stmt->execute([$userId, $userId, $userId]);
-            return ['success' => true, 'data' => $stmt->fetchAll()];
-        } catch (PDOException $e) {
-            return ['success' => false, 'message' => 'Error fetching linked accounts'];
-        }
+
+    private function generateOTP() {
+        return str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 }
 ?>

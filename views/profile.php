@@ -23,19 +23,69 @@ if (!$currentUser) {
 // Check if user is admin
 $isAdmin = ($currentUser['role'] === 'admin');
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-   <?php include 'header.php'; ?>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="asserts/js/toast.js"></script>
-</head>
-<body class="bg-gray-50">
-    <div class="max-w-6xl mx-auto p-4">
-    <!-- Profile Header -->
+
+<style>
+/* ✅ ANDROID WEBVIEW FIX - position fixed nahi chalega */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 16px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-backdrop.active {
+    display: flex !important;
+}
+
+.modal-backdrop.hidden {
+    display: none !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 32rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile fix */
+@media (max-width: 640px) {
+    .modal-backdrop {
+        padding: 12px;
+    }
+    
+    .modal-content {
+        max-height: 85vh;
+    }
+}
+</style>
+
+<!-- Profile Header -->
 <div class="bg-white rounded-xl shadow p-4 md:p-6 mb-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
@@ -139,7 +189,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
             </div>
             
             <?php if ($isAdmin): ?>
-            <button onclick="openModal('editProfileModal')" class="w-full mt-6 bg-blue-500 text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition">
+            <button onclick="openModalNew('editProfileModal')" class="w-full mt-6 bg-blue-500 text-white py-3 rounded-lg font-bold hover:bg-blue-600 transition">
                 <i class="fas fa-edit mr-2"></i> Edit Profile
             </button>
             <?php endif; ?>
@@ -163,7 +213,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
                 </div>
             </div>
             
-            <button onclick="openModal('changePasswordModal')" class="w-full mt-6 bg-gray-500 text-white py-3 rounded-lg font-bold hover:bg-gray-600 transition">
+            <button onclick="openModalNew('changePasswordModal')" class="w-full mt-6 bg-gray-500 text-white py-3 rounded-lg font-bold hover:bg-gray-600 transition">
                 <i class="fas fa-key mr-2"></i> Change Password
             </button>
         </div>
@@ -206,7 +256,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
     </a>
 
     <!-- Telegram -->
-    <a href="https://t.me/YOUR_TELEGRAM_USERNAME" target="_blank"
+    <a href="https://t.me/follopay" target="_blank"
         class="bg-gradient-to-r from-sky-500 to-sky-600 text-white p-3 rounded-lg text-center">
         <i class="fab fa-telegram-plane text-xl block mb-1"></i>
         <p class="text-sm font-semibold">Telegram</p>
@@ -215,15 +265,13 @@ $isAdmin = ($currentUser['role'] === 'admin');
 
 </div>
 
-</div>
-
-<!-- Edit Profile Modal (Admin Only) -->
-<div id="editProfileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-md">
+<!-- Edit Profile Modal (Admin Only) - ✅ ANDROID WEBVIEW COMPATIBLE -->
+<div id="editProfileModal" class="modal-backdrop hidden">
+    <div class="modal-content">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">Edit Profile</h2>
-                <button onclick="closeModal('editProfileModal')" class="text-gray-600 hover:text-gray-800">
+                <button onclick="closeModalNew('editProfileModal')" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -248,7 +296,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
                 <div id="editProfileMessage" class="hidden p-3 rounded-lg text-sm"></div>
                 
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeModal('editProfileModal')" 
+                    <button type="button" onclick="closeModalNew('editProfileModal')" 
                             class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
                     <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition font-medium">Save Changes</button>
                 </div>
@@ -257,13 +305,13 @@ $isAdmin = ($currentUser['role'] === 'admin');
     </div>
 </div>
 
-<!-- Change Password Modal -->
-<div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-xl shadow-lg w-full max-w-md">
+<!-- Change Password Modal - ✅ ANDROID WEBVIEW COMPATIBLE -->
+<div id="changePasswordModal" class="modal-backdrop hidden">
+    <div class="modal-content">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">Change Password</h2>
-                <button onclick="closeModal('changePasswordModal')" class="text-gray-600 hover:text-gray-800">
+                <button onclick="closeModalNew('changePasswordModal')" class="text-gray-600 hover:text-gray-800">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -302,7 +350,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
                 <div id="passwordMessage" class="hidden p-3 rounded-lg text-sm"></div>
                 
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeModal('changePasswordModal')" 
+                    <button type="button" onclick="closeModalNew('changePasswordModal')" 
                             class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
                     <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition font-medium">Update Password</button>
                 </div>
@@ -313,27 +361,33 @@ $isAdmin = ($currentUser['role'] === 'admin');
 
 <script>
 // ============================================
-// 🎯 ULTRA OPTIMIZED - NO DUPLICATE CALLS!
+// 🔧 ANDROID WEBVIEW OPTIMIZED
 // ============================================
 
 let walletData = null;
-let isLoadingWallet = false;  // ✅ Call guard
-let pageInitialized = false;  // ✅ Init guard
+let isLoadingWallet = false;
+let pageInitialized = false;
 
-// Ek hi baar call hoga - loadWalletData()
 window.addEventListener('DOMContentLoaded', initPage);
 
 function initPage() {
-    if (pageInitialized) {
-        console.log('❌ Page already initialized, skipping...');
-        return;
-    }
-    
+    if (pageInitialized) return;
     pageInitialized = true;
-    console.log('✅ Page initializing...');
     
     loadWalletData();
     setupFormHandlers();
+    setupModalHandlers();
+}
+
+function setupModalHandlers() {
+    // ✅ Close modal on background tap
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModalNew(this.id);
+            }
+        });
+    });
 }
 
 function setupFormHandlers() {
@@ -348,42 +402,46 @@ function setupFormHandlers() {
     }
 }
 
-/**
- * 🚀 SINGLE API CALL - NO DUPLICATES!
- */
-function loadWalletData() {
-    // Guard 1: Already loading?
-    if (isLoadingWallet) {
-        console.log('⏳ Wallet already loading, skipping...');
-        return;
+// ✅ NEW MODAL FUNCTIONS - Android WebView compatible
+function openModalNew(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            modal.scrollTop = 0;
+        }, 100);
     }
-    
-    // Guard 2: Already loaded?
-    if (walletData !== null) {
-        console.log('✅ Wallet already cached, using cache...');
-        updateUI(walletData);
+}
+
+function closeModalNew(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function loadWalletData() {
+    if (isLoadingWallet || walletData !== null) {
+        if (walletData) updateUI(walletData);
         return;
     }
     
     isLoadingWallet = true;
-    console.log('🔄 Making API call: ajax/wallet.php?action=get_balance');
     
     fetch('ajax/wallet.php?action=get_balance', {
         method: 'GET',
-        headers: {
-            'Cache-Control': 'no-cache'
-        }
+        headers: { 'Cache-Control': 'no-cache' }
     })
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch wallet');
-            }
+            if (!response.ok) throw new Error('Failed to fetch wallet');
             return response.json();
         })
         .then(data => {
-            console.log('✅ API Response received:', data);
             isLoadingWallet = false;
-            
             if (data.success && data.wallet) {
                 walletData = data.wallet;
                 updateUI(walletData);
@@ -392,33 +450,22 @@ function loadWalletData() {
             }
         })
         .catch(error => {
-            console.error('❌ Error loading wallet:', error);
+            console.error('Error:', error);
             isLoadingWallet = false;
             showError('recentActivity', error.message);
         });
 }
 
-/**
- * Single function to update all UI
- */
 function updateUI(wallet) {
     if (!wallet) return;
-    
-    // Update stats
     updateProfileStats(wallet);
-    
-    // Update transactions
     updateRecentActivity(wallet);
 }
 
-/**
- * Stats calculate karo
- */
 function updateProfileStats(wallet) {
     if (!wallet || !wallet.transactions) return;
     
     const transactions = wallet.transactions;
-    
     let totalEarned = 0;
     let completedCount = 0;
     let totalCount = transactions.length;
@@ -437,22 +484,12 @@ function updateProfileStats(wallet) {
     document.getElementById('totalEarned').textContent = '₹' + totalEarned.toFixed(2);
 }
 
-/**
- * Recent Activity display
- */
 function updateRecentActivity(wallet) {
-    if (!wallet || !wallet.transactions) {
+    if (!wallet || !wallet.transactions || wallet.transactions.length === 0) {
         showNoTransactions();
         return;
     }
-    
-    const transactions = wallet.transactions;
-    
-    if (Array.isArray(transactions) && transactions.length > 0) {
-        renderActivity(transactions);
-    } else {
-        showNoTransactions();
-    }
+    renderActivity(wallet.transactions);
 }
 
 function showNoTransactions() {
@@ -488,7 +525,6 @@ function renderActivity(activities) {
                      isCredit ? 'text-green-500' : 'text-blue-500';
         
         const amount = Math.abs(parseFloat(activity.amount || 0)).toFixed(2);
-        
         const statusBadge = activity.status === 'completed' ? 
             '<span class="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">Completed</span>' :
             activity.status === 'failed' ?
@@ -514,12 +550,9 @@ function renderActivity(activities) {
         `;
     });
     
-    container.innerHTML = html || '<p class="text-center text-gray-600">No transactions found</p>';
+    container.innerHTML = html;
 }
 
-/**
- * Refresh - walletData use kar, naya call nahi!
- */
 function refreshActivity() {
     const btn = document.getElementById('refreshBtn');
     btn.style.transform = 'rotate(360deg)';
@@ -527,31 +560,10 @@ function refreshActivity() {
     
     setTimeout(() => {
         btn.style.transform = 'rotate(0deg)';
-        
-        if (walletData) {
-            console.log('♻️ Refreshing from cache...');
-            updateRecentActivity(walletData);
-        } else {
-            console.log('📡 Cache empty, fetching fresh...');
-            loadWalletData();
+        if (walletData && walletData.transactions) {
+            renderActivity(walletData.transactions);
         }
     }, 500);
-}
-
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
 }
 
 function showReferral() {
@@ -582,7 +594,7 @@ async function handleEditProfile(e) {
             messageDiv.className = 'p-3 rounded-lg text-sm bg-green-100 text-green-700';
             
             setTimeout(() => {
-                closeModal('editProfileModal');
+                closeModalNew('editProfileModal');
                 location.reload();
             }, 1500);
         } else {
@@ -638,7 +650,7 @@ async function handleChangePassword(e) {
             
             this.reset();
             setTimeout(() => {
-                closeModal('changePasswordModal');
+                closeModalNew('changePasswordModal');
             }, 2000);
         } else {
             messageDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><strong>Error:</strong> ' + data.message;
@@ -707,5 +719,3 @@ function toggleConfirmNewPassword() {
     }
 }
 </script>
-</body>
-</html>

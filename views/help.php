@@ -248,7 +248,7 @@
                 <i class="fas fa-envelope mr-2"></i> Email Support
             </a>
             
-<a href="https://t.me/FolloPaySupport" target="_blank"
+<a href="https://t.me/follopay" target="_blank"
     class="bg-transparent border-2 border-white px-6 py-3 rounded-lg text-center font-bold  gap-2 hover:bg-white hover:text-blue-600">
     
     <i class="fab fa-telegram-plane text-lg"></i>

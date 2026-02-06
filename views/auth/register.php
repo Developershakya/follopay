@@ -14,6 +14,7 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white text-center">
+            <img src="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770007061/logo_v89hgg.png" alt="Logo" class="h-12 mx-auto mb-2">
             <h1 class="text-3xl font-bold">Create Account</h1>
             <p class="opacity-90 mt-2">Start earning money today!</p>
         </div>
@@ -24,45 +25,44 @@
                 <div>
                     <label class="block text-gray-700 mb-2">Username</label>
                     <input type="text" name="username" id="usernameInput"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
                            placeholder="Choose a username" required>
                     <p class="text-sm text-gray-600 mt-1">Min 3 characters</p>
                 </div>
                 
                 <div>
                     <label class="block text-gray-700 mb-2">Email Address</label>
-                    <input type="email" name="email" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    <input type="email" name="email" id="emailInput"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
                            placeholder="your@email.com" required>
                 </div>
                 
                 <div>
                     <label class="block text-gray-700 mb-2">Phone Number</label>
                     <input type="tel" name="phone" id="phoneInput"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="10 digit phone number" maxlength="10">
-                    <p class="text-sm text-gray-600 mt-1">valid number (valid 10 digits)</p>
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
+                           placeholder="10 digit phone number" maxlength="10" required>
+                    <p class="text-sm text-gray-600 mt-1">Valid Indian number (10 digits)</p>
                 </div>
                 
                 <div>
                     <label class="block text-gray-700 mb-2">Password</label>
                     <div class="relative">
                         <input type="password" name="password" id="registerPassword"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
                                placeholder="Create a password" required>
                         <button type="button" onclick="toggleRegisterPassword()" 
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800 transition">
                             <i id="registerPasswordIcon" class="fas fa-eye"></i>
                         </button>
                     </div>
-
                 </div>
                 
                 <div>
                     <label class="block text-gray-700 mb-2">Confirm Password</label>
                     <div class="relative">
                         <input type="password" name="confirm_password" id="confirmPassword"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" 
                                placeholder="Confirm your password" required>
                         <button type="button" onclick="toggleConfirmPassword()" 
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800 transition">
@@ -82,7 +82,6 @@
                     </label>
                 </div>
                 
-                
                 <!-- Submit Button -->
                 <button type="submit" 
                         class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-purple-700 transition-all">
@@ -97,20 +96,17 @@
                     <a href="?page=login" class="text-blue-600 font-bold hover:text-blue-800">Sign In</a>
                 </p>
             </div>
-                                    <div class="text-center mt-4">
-            <a href="?page=help"
-            class="text-sm text-gray-500 hover:text-blue-600 flex items-center justify-center gap-2">
-            <i class="fas fa-circle-question"></i>
-            Need help?
-            </a>
+            
+            <div class="text-center mt-4">
+                <a href="?page=help"
+                class="text-sm text-gray-500 hover:text-blue-600 flex items-center justify-center gap-2">
+                <i class="fas fa-circle-question"></i>
+                Need help?
+                </a>
             </div>
         </div>
-        
-
     </div>
 </div>
-
-
 
 <script>
     // Phone number input - only numbers allowed, max 10 digits
@@ -219,7 +215,6 @@
         
         // Submit form
         const formData = new FormData(this);
-        formData.append('ajax', 'true');
         formData.append('action', 'register');
         
         // Show loading state
@@ -237,16 +232,18 @@
             const data = await response.json();
             
             if (data.success) {
-                showToast(data.message || 'Account created successfully!', 2500, 'success');
+                showToast('✓ ' + (data.message || 'OTP sent to your email!'), 2500, 'success');
                 
-                // Redirect to dashboard after successful registration
+                // Store email in session storage for verify-otp page
+                sessionStorage.setItem('registration_email', email);
+                
+                // Redirect to OTP verification page after 2 seconds
                 setTimeout(() => {
-                    window.location.href = '?page=dashboard';
+                    window.location.href = '?page=verify-otp&email=' + encodeURIComponent(email);
                 }, 2000);
             } else {
                 // Handle backend validation errors
                 if (data.errors && typeof data.errors === 'object') {
-                    // Show each validation error
                     Object.keys(data.errors).forEach(field => {
                         const error = data.errors[field];
                         if (Array.isArray(error)) {
@@ -256,108 +253,29 @@
                         }
                     });
                 } else {
-                    // Show general error message
                     showToast(data.message || 'Registration failed', 3000, 'error');
                 }
+                
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         } catch (error) {
             console.error('Error:', error);
             showToast('Network error. Please try again.', 3000, 'error');
-        } finally {
-            // Reset button state
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
     });
-
-    // Password strength indicator
-    document.getElementById('registerPassword').addEventListener('input', function() {
-        const password = this.value;
-        const strength = checkPasswordStrength(password);
-        updatePasswordStrength(strength);
-    });
-
-    function checkPasswordStrength(password) {
-        let score = 0;
-        
-        // Length check
-        if (password.length >= 6) score++;
-        if (password.length >= 8) score++;
-        
-        // Character type checks
-        if (/[A-Z]/.test(password)) score++;
-        if (/[0-9]/.test(password)) score++;
-        if (/[^A-Za-z0-9]/.test(password)) score++;
-        
-        return Math.min(score, 5); // Max score 5
-    }
-
-    function updatePasswordStrength(strength) {
-        const indicator = document.getElementById('passwordStrength') || createStrengthIndicator();
-        const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
-        const texts = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
-        
-        indicator.innerHTML = '';
-        
-        for (let i = 0; i < 5; i++) {
-            const bar = document.createElement('div');
-            bar.className = `h-1 rounded ${i < strength ? colors[strength - 1] : 'bg-gray-300'}`;
-            indicator.appendChild(bar);
-        }
-        
-        // Update text
-        const textElement = indicator.parentElement.querySelector('.strength-text');
-        if (textElement) {
-            textElement.textContent = strength > 0 ? `Strength: ${texts[strength - 1]}` : '';
-        }
-    }
-
-    function createStrengthIndicator() {
-        const passwordField = document.getElementById('registerPassword');
-        const parentDiv = passwordField.parentElement.parentElement;
-        
-        const container = document.createElement('div');
-        container.className = 'mt-2';
-        
-        const textDiv = document.createElement('div');
-        textDiv.className = 'text-xs strength-text mb-1';
-        
-        const indicatorDiv = document.createElement('div');
-        indicatorDiv.id = 'passwordStrength';
-        indicatorDiv.className = 'flex space-x-1';
-        
-        container.appendChild(textDiv);
-        container.appendChild(indicatorDiv);
-        parentDiv.appendChild(container);
-        
-        return indicatorDiv;
-    }
 </script>
 
 <style>
 input:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.3s ease;
 }
 </style>
 </body>

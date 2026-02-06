@@ -18,12 +18,39 @@ switch($action) {
         ]);
         echo json_encode($result);
         break;
+
+    case 'verify-otp':
+        $result = $auth->verifyOTP([
+            'email' => $_POST['email'] ?? '',
+            'otp' => $_POST['otp'] ?? ''
+        ]);
+        echo json_encode($result);
+        break;
+
+    case 'refresh-otp':
+        $result = $auth->refreshOTP($_POST['email'] ?? '');
+        echo json_encode($result);
+        break;
         
     case 'login':
         $result = $auth->login([
             'email' => $_POST['email'] ?? '',
             'password' => $_POST['password'] ?? '',
             'remember' => $_POST['remember'] ?? false
+        ]);
+        echo json_encode($result);
+        break;
+
+    case 'forgot-password':
+        $result = $auth->forgotPassword($_POST['email'] ?? '');
+        echo json_encode($result);
+        break;
+
+    case 'reset-password':
+        $result = $auth->resetPassword([
+            'token' => $_POST['token'] ?? '',
+            'password' => $_POST['password'] ?? '',
+            'confirm_password' => $_POST['confirm_password'] ?? ''
         ]);
         echo json_encode($result);
         break;

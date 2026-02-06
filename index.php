@@ -8,7 +8,7 @@ $isAdmin = $auth->isAdmin();
 
 $page = $_GET['page'] ?? 'dashboard';
 
-$publicPages = ['login', 'register', 'forgot-password', 'help'];
+$publicPages = ['login', 'register', 'forgot-password', 'help' ,'verify-otp','reset-password', 'forgot-password'];
 
 if (!$isLoggedIn && !in_array($page, $publicPages)) {
     $page = 'login';
@@ -18,9 +18,10 @@ if ($isLoggedIn && in_array($page, ['login', 'register'])) {
     $page = 'dashboard';
 }
 
+// ✓ FIXED: Check if is_banned key exists before accessing
 if ($isLoggedIn) {
     $user = $auth->getCurrentUser();
-    if ($user && $user['is_banned']) {
+    if ($user && isset($user['is_banned']) && $user['is_banned']) {
         $page = 'banned';
     }
 }
@@ -93,15 +94,15 @@ $viewFiles = [
     'admin-post-edit' => 'views/admin/admin-post-edit.php',
     'manage-images' => 'views/admin/manage-images.php',
     'verify-otp' => 'views/auth/verify-otp.php',
-    'reset-password-verify' => 'views/auth/reset-password-verify.php',
-    'reset-password-form' => 'views/auth/reset-password-form.php',
+    'forgot-password' => 'views/auth/forgot-password.php',
+    'reset-password' => 'views/auth/reset-password.php',
     'test' => 'views/test.php',
     'device-tracking' => 'views/admin/device-tracking.php'
 ];
 
 $viewFile = $viewFiles[$page] ?? 'views/404.php';
 
-if (in_array($page, ['login', 'register', 'help'])) {
+if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp','reset-password'])) {
     require_once $viewFile;
     exit;
 }

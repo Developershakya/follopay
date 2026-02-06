@@ -385,9 +385,13 @@ function createDesktopAssignmentHTML(assignment) {
                             <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md max-h-40 overflow-y-auto">
                                 ${escapeHtml(assignment.comment_text || 'No comment')}
                             </div>
-                            <button onclick="copyComment('${escapeForJS(assignment.comment_text)}')" class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold hover:bg-blue-700 active:bg-blue-800 transition-colors">
-                                <i class="fas fa-copy mr-2"></i> Copy Comment
-                            </button>
+<button
+  onclick="copyComment(this)"
+  data-text="${escapeHtml(assignment.comment_text || '')}"
+  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold">
+  <i class="fas fa-copy mr-2"></i> Copy Comment
+</button>
+
                         </div>
                         
                         <div class="bg-white rounded-lg p-4 border border-gray-200">
@@ -493,9 +497,13 @@ function createMobileAssignmentHTML(assignment) {
                     <div class="bg-gray-900 text-white p-3 rounded-lg font-mono text-xs break-words max-h-32 overflow-y-auto">
                         ${escapeHtml(assignment.comment_text || 'No comment')}
                     </div>
-                    <button onclick="copyComment('${escapeForJS(assignment.comment_text)}')" class="w-full bg-blue-600 text-white py-2 rounded-lg mt-2 font-bold text-sm hover:bg-blue-700 active:bg-blue-800">
-                        <i class="fas fa-copy mr-1"></i> Copy
-                    </button>
+<button
+  onclick="copyComment(this)"
+  data-text="${escapeHtml(assignment.comment_text || '')}"
+  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold">
+  <i class="fas fa-copy mr-2"></i> Copy Comment
+</button>
+
                 </div>
                 
                 <div class="bg-white rounded-lg p-3 border border-gray-200 mb-4">
@@ -738,19 +746,46 @@ function startTimer(seconds, assignmentId) {
     }, 30000);
 }
 
-function copyComment(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('Comment copied!', 2000, 'success');
-    }).catch(() => {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('Comment copied!', 2000, 'success');
-    });
+function copyComment(btn) {
+    const text = btn.dataset.text;
+
+    if (!text) {
+        showToast('Nothing to copy', 2000, 'error');
+        return;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+            .then(() => showToast('Comment copied!', 2000, 'success'))
+            .catch(() => fallbackCopy(text));
+    } else {
+        fallbackCopy(text);
+    }
 }
+
+function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+
+    // 🔥 mobile fix
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-1000px';
+    textarea.style.opacity = '0';
+
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+        document.execCommand('copy');
+        showToast('Comment copied!', 2000, 'success');
+    } catch (e) {
+        showToast('Copy not supported', 3000, 'error');
+    }
+
+    document.body.removeChild(textarea);
+}
+
 
 function showConfirmDialog(title, message, onConfirm, onCancel) {
     let dialog = document.getElementById('confirmDialog');

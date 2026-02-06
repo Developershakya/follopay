@@ -282,10 +282,12 @@ function loadTodayTasks() {
             countBadge.textContent = data.tasks.length;
             let html = '';
 
-            data.tasks.forEach(task => {
+            data.tasks.forEach((task, index) => {
                 const appName = task.app_name || 'Unknown App';
                 const appLink = task.app_link || '#';
                 const price = parseFloat(task.price) || 0;
+                const rejectReason = task.reject_reason || null;
+                const taskId = task.id || index;
 
                 // Status badge
                 let badge = '';
@@ -301,18 +303,53 @@ function loadTodayTasks() {
                     badge = 'Rejected';
                 }
 
+                // ============= COLLAPSIBLE REJECTION REASON =============
+                let rejectionReasonHtml = '';
+                if (task.status === 'rejected' && rejectReason) {
+                    const expandId = `reason-expand-${taskId}`;
+                    
+                    rejectionReasonHtml = `
+                        <div class="mt-4 border border-red-200 rounded-lg overflow-hidden">
+                            <button 
+                                type="button"
+                                onclick="toggleRejectionReason('${expandId}')"
+                                class="w-full p-3 bg-red-50 hover:bg-red-100 transition flex items-center justify-between cursor-pointer group"
+                                style="border: none; text-align: left;">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">❌</span>
+                                    <div>
+                                        <p class="text-xs font-bold text-red-700 uppercase tracking-wide">Rejection Reason</p>
+                                        <p class="text-sm text-red-600 font-medium line-clamp-1">${escapeHtml(rejectReason)}</p>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-down text-red-600 group-hover:translate-y-1 transition-transform" style="font-size: 12px;"></i>
+                            </button>
+                            
+                            <div 
+                                id="${expandId}"
+                                class="hidden bg-red-50 border-t border-red-200 p-3 max-h-0 overflow-hidden transition-all duration-300 ease-in-out"
+                                style="max-height: 0;">
+                                <div class="space-y-2">
+                                    <p class="text-sm text-red-700 leading-relaxed break-words">${escapeHtml(rejectReason)}</p>
+                                    <p class="text-xs text-red-500 italic">Please review and resubmit with corrections</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 html += `
                     <div class="bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col overflow-hidden">
                         <!-- Card Header -->
                         <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 md:p-5 border-b border-gray-200">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-lg md:text-base text-gray-800 truncate">${appName}</h3>
-                                 <a href="${appLink}" target="_blank" class="inline-block mt-1">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-         alt="Play Store" 
-         class="h-8 md:h-10 hover:scale-105 transition-transform duration-200">
-</a>
+                                    <h3 class="font-bold text-lg md:text-base text-gray-800 truncate">${escapeHtml(appName)}</h3>
+                                    <a href="${appLink}" target="_blank" class="inline-block mt-1">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
+                                    alt="Play Store" 
+                                    class="h-8 md:h-10 hover:scale-105 transition-transform duration-200">
+                                    </a>
 
                                 </div>
                             </div>
@@ -324,6 +361,9 @@ function loadTodayTasks() {
                         <!-- Card Body -->
                         <div class="p-4 md:p-5 flex-1">
                             <p class="text-gray-700 text-sm md:text-base">Task submitted on: ${task.submitted_time.split(' ')[0]}</p>
+                            
+                            <!-- Collapsible Rejection Reason (NEW) -->
+                            ${rejectionReasonHtml}
                         </div>
                     </div>
                 `;
@@ -337,13 +377,41 @@ function loadTodayTasks() {
             container.innerHTML = `
                 <div class="text-center py-12 col-span-full">
                     <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-3"></i>
-                    <p class="text-red-600 font-medium">Failed to load today’s tasks</p>
+                    <p class="text-red-600 font-medium">Failed to load today's tasks</p>
                     <p class="text-gray-600 text-sm mt-2">Please refresh the page</p>
                 </div>
             `;
         });
 }
 
+// Helper function to escape HTML (security)
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Toggle rejection reason visibility (for collapsible version)
+function toggleRejectionReason(elementId) {
+    const element = document.getElementById(elementId);
+    const isHidden = element.classList.contains('hidden');
+    
+    if (isHidden) {
+        // Show
+        element.classList.remove('hidden');
+        const content = element.querySelector('div');
+        if (content) {
+            const height = content.scrollHeight;
+            element.style.maxHeight = height + 'px';
+        }
+    } else {
+        // Hide
+        element.style.maxHeight = '0';
+        setTimeout(() => {
+            element.classList.add('hidden');
+        }, 300);
+    }
+}
 
     function startEarning(postId) {
         if (!postId) {
