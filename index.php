@@ -8,7 +8,7 @@ $isAdmin = $auth->isAdmin();
 
 $page = $_GET['page'] ?? 'dashboard';
 
-$publicPages = ['login', 'register', 'forgot-password', 'help' ,'verify-otp','reset-password', 'forgot-password'];
+$publicPages = ['login', 'register', 'forgot-password', 'help' ,'verify-otp','reset-password', 'delete-account'];
 
 if (!$isLoggedIn && !in_array($page, $publicPages)) {
     $page = 'login';
@@ -97,12 +97,14 @@ $viewFiles = [
     'forgot-password' => 'views/auth/forgot-password.php',
     'reset-password' => 'views/auth/reset-password.php',
     'test' => 'views/test.php',
-    'device-tracking' => 'views/admin/device-tracking.php'
+    'device-tracking' => 'views/admin/device-tracking.php',
+    'delete-account' => 'views/delete-account.php',
+    'admin-account-delete-requests' => 'views/admin/account-delete-request.php'
 ];
 
 $viewFile = $viewFiles[$page] ?? 'views/404.php';
 
-if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp','reset-password'])) {
+if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp','reset-password' ,'delete-account'])) {
     require_once $viewFile;
     exit;
 }

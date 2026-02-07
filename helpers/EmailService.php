@@ -440,5 +440,235 @@ class EmailService {
         </html>
         ";
     }
+    public function sendDeletionRequestConfirmation($email, $username, $requestId) {
+    $subject = "Account Deletion Request Received - EarnApp";
+    
+    $body = "
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #667eea; color: white; padding: 20px; border-radius: 5px 5px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 20px; }
+                .info-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #667eea; }
+                .footer { background: #333; color: white; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 5px 5px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Account Deletion Request Received</h2>
+                </div>
+                <div class='content'>
+                    <p>Hello <strong>{$username}</strong>,</p>
+                    
+                    <p>We have received your request to delete your EarnApp account. Our admin team will review your request and contact you within 24-48 hours.</p>
+                    
+                    <div class='info-box'>
+                        <strong>Request Details:</strong><br>
+                        Request ID: <code>{$requestId}</code><br>
+                        Status: <span style='color: #ff9800;'>Pending Review</span><br>
+                        Submitted: " . date('Y-m-d H:i:s') . "
+                    </div>
+                    
+                    <p><strong>Important:</strong></p>
+                    <ul>
+                        <li>Your account will be permanently deleted if approved</li>
+                        <li>All your data and history will be removed</li>
+                        <li>This action cannot be reversed</li>
+                        <li>Any pending payments will be forfeited</li>
+                    </ul>
+                    
+                    <p>If you did not submit this request or wish to cancel it, please contact our support team immediately.</p>
+                    
+                    <p>Best regards,<br>The EarnApp Team</p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; 2024 EarnApp. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    ";
+    
+    return $this->send($email, $subject, $body);
+}
+
+/**
+ * Send notification to admin about deletion request
+ */
+public function sendAdminDeletionNotification($username, $email, $phone) {
+    $adminEmail = ADMIN_EMAIL; // Define this in your config
+    $subject = "[ALERT] New Account Deletion Request - EarnApp Admin";
+    
+    $body = "
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .alert { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 10px 0; }
+                .details { background: #f9f9f9; padding: 15px; margin: 10px 0; }
+                .table { width: 100%; border-collapse: collapse; }
+                .table th { background: #667eea; color: white; padding: 10px; text-align: left; }
+                .table td { padding: 10px; border-bottom: 1px solid #ddd; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <h2>⚠️ New Account Deletion Request</h2>
+                
+                <div class='alert'>
+                    <strong>A user has requested account deletion. Please review and take action within 48 hours.</strong>
+                </div>
+                
+                <div class='details'>
+                    <table class='table'>
+                        <tr>
+                            <th>Field</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Username</strong></td>
+                            <td>{$username}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email</strong></td>
+                            <td>{$email}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Phone</strong></td>
+                            <td>{$phone}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Submitted At</strong></td>
+                            <td>" . date('Y-m-d H:i:s') . "</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p><strong>Action Required:</strong></p>
+                <p>Please log in to the admin panel to review and process this deletion request.</p>
+                <p><a href='" . BASE_URL . "/admin/deletion-requests.php' style='background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;'>View in Admin Panel</a></p>
+                
+                <hr>
+                <p style='color: #999; font-size: 12px;'>This is an automated notification from EarnApp Admin System.</p>
+            </div>
+        </body>
+    </html>
+    ";
+    
+    return $this->send($adminEmail, $subject, $body);
+}
+
+/**
+ * Send deletion completion email
+ */
+public function sendDeletionCompletionEmail($email, $username) {
+    $subject = "Your Account Has Been Deleted - EarnApp";
+    
+    $body = "
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #28a745; color: white; padding: 20px; border-radius: 5px 5px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 20px; }
+                .info-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #28a745; }
+                .footer { background: #333; color: white; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 5px 5px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Account Deletion Complete</h2>
+                </div>
+                <div class='content'>
+                    <p>Hello {$username},</p>
+                    
+                    <div class='info-box'>
+                        <strong>✓ Your account has been permanently deleted</strong><br>
+                        Completed: " . date('Y-m-d H:i:s') . "
+                    </div>
+                    
+                    <p>Your EarnApp account and all associated data have been permanently removed from our servers.</p>
+                    
+                    <p><strong>What happens next:</strong></p>
+                    <ul>
+                        <li>Your profile and personal information have been deleted</li>
+                        <li>All transaction history has been removed</li>
+                        <li>You can no longer log in to EarnApp</li>
+                        <li>If you change your mind, you can create a new account</li>
+                    </ul>
+                    
+                    <p>We're sorry to see you go! If you have any feedback about your experience, please feel free to reach out.</p>
+                    
+                    <p>Best regards,<br>The EarnApp Team</p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; 2024 EarnApp. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    ";
+    
+    return $this->send($email, $subject, $body);
+}
+
+/**
+ * Send deletion rejection email
+ */
+public function sendDeletionRejectionEmail($email, $username, $reason) {
+    $subject = "Your Account Deletion Request Has Been Rejected - EarnApp";
+    
+    $reasonText = $reason ? htmlspecialchars($reason) : "The request did not meet our deletion criteria.";
+    
+    $body = "
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #dc3545; color: white; padding: 20px; border-radius: 5px 5px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 20px; }
+                .info-box { background: #ffe6e6; padding: 15px; margin: 10px 0; border-left: 4px solid #dc3545; }
+                .footer { background: #333; color: white; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 5px 5px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>Account Deletion Request Rejected</h2>
+                </div>
+                <div class='content'>
+                    <p>Hello {$username},</p>
+                    
+                    <div class='info-box'>
+                        <strong>Your account deletion request has been rejected.</strong><br>
+                        Decision Date: " . date('Y-m-d H:i:s') . "
+                    </div>
+                    
+                    <p><strong>Reason:</strong></p>
+                    <p>{$reasonText}</p>
+                    
+                    <p>Your account remains active and you can continue using EarnApp normally.</p>
+                    
+                    <p>If you believe this decision was made in error or have questions, please contact our support team.</p>
+                    
+                    <p>Best regards,<br>The EarnApp Team</p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; 2024 EarnApp. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    ";
+    
+    return $this->send($email, $subject, $body);
+}
 }
 ?>
