@@ -16,7 +16,26 @@ class EmailService {
     private $mail;
     private $senderEmail;
     private $senderName;
-    
+    private function send($to, $subject, $body)
+{
+    try {
+        $this->mail->clearAddresses();
+
+        $this->mail->setFrom($this->senderEmail, $this->senderName);
+        $this->mail->addAddress($to);
+
+        $this->mail->isHTML(true);
+        $this->mail->Subject = $subject;
+        $this->mail->Body = $body;
+        $this->mail->AltBody = strip_tags($body);
+
+        return $this->mail->send();
+
+    } catch (Exception $e) {
+        error_log("Email Error: " . $this->mail->ErrorInfo);
+        return false;
+    }
+}
     public function __construct() {
         // Initialize PHPMailer
         $this->mail = new PHPMailer(true);
@@ -63,7 +82,51 @@ class EmailService {
             return false;
         }
     }
-    
+    public function sendPostsDeactivatedNotification($email, $affectedRows)
+{
+    $subject = "All Posts Deactivated - EarnApp";
+
+    $body = "
+    <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: #dc3545; color: white; padding: 20px; border-radius: 5px 5px 0 0; text-align: center; }
+                .content { background: #f9f9f9; padding: 20px; }
+                .info-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #dc3545; }
+                .footer { background: #333; color: white; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 5px 5px; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h2>All Posts Deactivated</h2>
+                </div>
+                <div class='content'>
+                    <p>Hello Admin,</p>
+
+                    <div class='info-box'>
+                        <strong>Total Posts Affected:</strong> {$affectedRows}<br>
+                        <strong>Date:</strong> " . date('Y-m-d H:i:s') . "
+                    </div>
+
+                    <p>All posts have been successfully set to <strong>Inactive</strong> by system automation.</p>
+
+                    <p>This is an automated system notification.</p>
+
+                    <p>Regards,<br><strong>EarnApp System</strong></p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; 2026 EarnApp. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    ";
+
+    return $this->send($email, $subject, $body);
+}
     /**
      * Send Password Reset Email
      */

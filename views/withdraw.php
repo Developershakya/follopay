@@ -3,609 +3,1140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Withdraw</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
      <?php include 'header.php'; ?>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --purple: #7B5EA7;
+            --purple-light: #9B7CC7;
+            --purple-dark: #5C3D8F;
+            --purple-bg: #F3EEFF;
+            --mint: #4CAF82;
+            --mint-light: #E8F7F0;
+            --gray-bg: #F7F8FC;
+            --text-dark: #1A1A2E;
+            --text-mid: #555;
+            --text-light: #999;
+            --card-shadow: 0 4px 20px rgba(123,94,167,0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--gray-bg);
+            color: var(--text-dark);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px 10px;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+        }
+        .header .back-btn {
+            font-size: 20px;
+            color: var(--text-dark);
+            cursor: pointer;
+            margin-right: 12px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .header .back-btn:hover { background: var(--purple-bg); }
+        .header h1 { font-size: 20px; font-weight: 800; color: var(--text-dark); }
+
+        
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            border-radius: var(--radius);
+            padding: 24px 22px;
+            color: white;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; right: 30px;
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .balance-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.85;
+            margin-bottom: 8px;
+        }
+        .balance-label .icon-wrap {
+            width: 28px; height: 28px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+        }
+        .balance-amount {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 6px;
+        }
+        .balance-sub {
+            font-size: 12px;
+            opacity: 0.75;
+            font-weight: 600;
+        }
+
+        /* Amount Input Section */
+        .section-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+        }
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .amount-input-wrap {
+            position: relative;
+            margin-bottom: 14px;
+        }
+        .amount-input-wrap .rupee-sign {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--purple);
+        }
+        .amount-input-wrap input {
+            width: 100%;
+            padding: 16px 16px 16px 36px;
+            border: 2px solid var(--purple-bg);
+            border-radius: 14px;
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-bg);
+        }
+        .amount-input-wrap input:focus {
+            border-color: var(--purple);
+            background: white;
+        }
+        .amount-input-wrap input::placeholder { color: #ccc; font-weight: 700; }
+
+        /* Quick Amount Chips */
+        .quick-amounts {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .quick-amounts .chip {
+            padding: 8px 16px;
+            border-radius: 100px;
+            border: 2px solid var(--purple-bg);
+            background: var(--purple-bg);
+            color: var(--purple);
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Nunito', sans-serif;
+        }
+        .quick-amounts .chip:hover, .quick-amounts .chip.active {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Withdraw To Section */
+        .withdraw-to-label {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .payment-option {
+            border: 2px solid #EBEBF0;
+            border-radius: 14px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            background: white;
+        }
+        .payment-option.selected {
+            border-color: var(--purple);
+            background: var(--purple-bg);
+        }
+        .payment-option.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .payment-option .check-icon {
+            position: absolute;
+            top: 10px; right: 10px;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: var(--purple);
+            color: white;
+            font-size: 11px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .payment-option.selected .check-icon { display: flex; }
+
+        .payment-option .opt-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .payment-option.upi-opt .opt-icon { background: #E8F0FE; color: #4285F4; }
+        .payment-option.ff-opt .opt-icon { background: #FFF0E0; color: #FF7A00; }
+        .payment-option .opt-name { font-size: 14px; font-weight: 800; color: var(--text-dark); }
+        .payment-option .opt-desc { font-size: 11px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+
+        /* UPI Linked Badge */
+        .upi-linked-badge {
+            display: none;
+            margin-top: 5px;
+        }
+        .upi-linked-badge span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #E8F7F0;
+            color: #4CAF82;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 100px;
+            border: 1.5px solid #C3E8D5;
+        }
+
+        /* UPI ID display */
+        .upi-connected {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--mint-light);
+            border-radius: 12px;
+            border: 1.5px solid #C3E8D5;
+        }
+        .upi-connected .upi-logo {
+            width: 32px; height: 32px;
+            background: #E8F0FE;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #4285F4; font-weight: 800;
+        }
+        .upi-connected .upi-info { flex: 1; }
+        .upi-connected .upi-id-text { font-size: 13px; font-weight: 800; color: var(--text-dark); }
+        .upi-connected .connected-badge {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 700; color: var(--mint);
+        }
+
+        /* Mode Selection */
+        .mode-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .mode-opt {
+            border: 2px solid #EBEBF0;
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-opt.selected { border-color: var(--purple); background: var(--purple-bg); }
+        .mode-opt.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        .mode-opt .mode-title { font-size: 13px; font-weight: 800; color: var(--text-dark); }
+        .mode-opt .mode-sub { font-size: 11px; color: var(--text-light); font-weight: 600; margin-top: 3px; }
+        .mode-opt.selected .mode-title { color: var(--purple); }
+
+        /* Charge info */
+        .charge-info-box {
+            background: var(--purple-bg);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 14px;
+        }
+        .charge-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-mid);
+            margin-bottom: 6px;
+        }
+        .charge-row:last-child { margin-bottom: 0; }
+        .charge-row .val { font-weight: 800; color: var(--text-dark); }
+        .charge-row .val.red { color: #E53935; }
+        .charge-row .val.green { color: var(--mint); font-size: 15px; }
+        .divider-row { border-top: 1.5px dashed #D5C5F0; margin: 8px 0; }
+
+        /* Meta info row */
+        .meta-info {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 14px;
+            background: var(--gray-bg);
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+        .meta-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-mid);
+        }
+        .meta-sep { color: #D0D0D0; font-size: 16px; }
+
+        /* Notice */
+        .notice-card {
+            background: #FFFBF0;
+            border-left: 4px solid #FFB800;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .notice-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 800; color: #7A5C00;
+            margin-bottom: 10px;
+        }
+        .notice-list { list-style: none; }
+        .notice-list li {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7A5C00;
+            margin-bottom: 6px;
+            padding-left: 14px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .notice-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #FFB800;
+        }
+        .notice-list li.red { color: #C0392B; }
+        .notice-list li.red::before { color: #C0392B; }
+
+        /* Withdrawal History */
+        .history-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .history-title { font-size: 17px; font-weight: 800; }
+        .refresh-btn {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: var(--purple-bg);
+            border: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--purple);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: var(--purple); color: white; }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: var(--gray-bg);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        .history-item:hover { background: var(--purple-bg); }
+        .history-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .history-icon.upi { background: #E8F0FE; color: #4285F4; }
+        .history-icon.ff { background: #FFF0E0; color: #FF7A00; }
+        .history-details { flex: 1; }
+        .history-name { font-size: 14px; font-weight: 800; color: var(--text-dark); }
+        .history-date { font-size: 11px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+        .history-sub { font-size: 11px; color: var(--text-light); font-weight: 600; margin-top: 1px; }
+        .history-right { text-align: right; }
+        .history-amount { font-size: 17px; font-weight: 900; color: var(--text-dark); }
+        .history-charge { font-size: 11px; color: #E53935; font-weight: 700; }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+        .status-badge.pending { background: #FFF9C4; color: #F57F17; }
+        .status-badge.approved { background: var(--mint-light); color: var(--mint); }
+        .status-badge.failed { background: #FFEBEE; color: #C62828; }
+        .status-badge.refunded { background: #E3F2FD; color: #1565C0; }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 100px;
+            font-size: 16px;
+            font-weight: 800;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 6px;
+            box-shadow: 0 6px 20px rgba(123,94,167,0.35);
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(123,94,167,0.45);
+        }
+        .submit-btn:active:not(:disabled) { transform: translateY(0); }
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+        .empty-state i { font-size: 40px; margin-bottom: 10px; opacity: 0.3; }
+        .empty-state p { font-size: 14px; font-weight: 700; }
+
+        /* Toast */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: calc(100% - 32px);
+            max-width: 440px;
+        }
+        .toast {
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: toastIn 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .toast.success { background: var(--mint); }
+        .toast.error { background: #E53935; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Free Fire form */
+        .ff-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .ff-card {
+            border: 2px solid #EBEBF0;
+            border-radius: 14px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ff-card.selected {
+            border-color: var(--purple);
+            background: var(--purple-bg);
+        }
+        .ff-card img { width: 44px; height: 44px; object-fit: cover; margin-bottom: 6px; }
+        .ff-card .ff-price { font-size: 16px; font-weight: 900; color: var(--purple); }
+        .ff-card .ff-diamonds { font-size: 11px; font-weight: 700; color: var(--text-mid); }
+
+        .uid-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--purple-bg);
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--gray-bg);
+        }
+        .uid-input:focus { border-color: var(--purple); background: white; }
+
+        /* UPI Loading Skeleton */
+        .upi-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.2s infinite;
+            border-radius: 10px;
+            height: 48px;
+            margin-bottom: 14px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .bottom-spacer { height: 24px; }
+    </style>
 </head>
 <body>
-    <div class="max-w-6xl mx-auto">
-    <!-- Current Balance -->
-    <div class="bg-gradient-to-r from-green-400 to-green-500 rounded-xl p-6 text-white mb-6">
-        <div class="flex justify-between items-center">
-            <div>
-                <p class="text-sm opacity-90">Available for Withdrawal</p>
-                <p id="availableBalance" class="text-4xl font-bold">₹0</p>
-                <p class="text-sm opacity-90 mt-2">Minimum withdrawal: ₹50</p>
-            </div>
-            <i class="fas fa-money-bill-wave text-5xl opacity-80"></i>
+
+<!-- Header -->
+<!-- <div class="header">
+    <div class="back-btn" onclick="history.back()"><i class="fas fa-chevron-left"></i></div>
+    <h1>Withdraw</h1>
+</div> -->
+
+<div class="page-content">
+
+    <!-- Balance Card -->
+    <div class="balance-card">
+        <div class="balance-label">
+            <div class="icon-wrap"><i class="fas fa-wallet"></i></div>
+            Available Balance
         </div>
-    </div>
-      
-        <!-- Important Notice -->
-<div class="bg-gray-50 py-6">
-    <div class="bg-white border-l-8 border-amber-500 rounded-lg p-6  mx-auto shadow-md">
-        <div class="flex items-start gap-4">
-            <!-- Warning Icon -->
-            <div class="flex-shrink-0">
-                <i class="fas fa-exclamation-triangle text-amber-500 text-2xl mt-1"></i>
-            </div>
-
-            <!-- Notice Text -->
-            <div class="flex-1 text-gray-700">
-                <h3 class="font-semibold text-gray-800 text-lg mb-3">
-                    Important Notice
-                </h3>
-                <ul class="space-y-2 leading-relaxed text-sm sm:text-base">
-                    <li>• Entering incorrect UPI ID or Free Fire UID may result in permanent loss of funds.</li>
-                    <li>• Fake or duplicate accounts are not eligible for payment.</li>
-                    <li>• Account name must match the UPI holder’s name. Mismatch will lead to rejection.</li>
-                    <li class="text-red-600 font-medium">• Rejected payments are <strong>non-refundable</strong>.</li>
-                    <li>• Multiple accounts withdrawing to the same UPI ID will be permanently banned.</li>
-                    <li>• Instant withdrawals have a <strong>20% charge</strong>.</li>
-                    <li>• Standard withdrawals available only <strong>10th–17th of each month</strong>.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-
-    <!-- Withdrawal Type Selection -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <!-- UPI Card -->
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-6 text-white cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all" onclick="showUPIForm()">
-            <div class="flex items-start justify-between">
-                <div>
-                    <i class="fas fa-university text-4xl mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">UPI Transfer</h3>
-                    <p class="text-sm opacity-90">Instant & Duration options available</p>
-                </div>
-                <i class="fas fa-chevron-right text-2xl opacity-70"></i>
-            </div>
-            
-            <div class="mt-4 space-y-2">
-                <div class="flex justify-between text-sm">
-                    <span>Instant (20% charge)</span>
-                    <span class="font-bold">Min ₹5</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span>Duration (No charge)</span>
-                    <span class="font-bold">Min ₹10</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Free Fire Card -->
-        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-6 text-white cursor-pointer hover:from-purple-600 hover:to-purple-700 transition-all" onclick="showFreeFireForm()">
-            <div class="flex items-start justify-between">
-                <div>
-                    <i class="fas fa-gamepad text-4xl mb-4"></i>
-                    <h3 class="text-xl font-bold mb-2">Free Fire Diamonds</h3>
-                    <p class="text-sm opacity-90">Get Free Fire Diamonds</p>
-                </div>
-                <i class="fas fa-chevron-right text-2xl opacity-70"></i>
-            </div>
-            
-            <div class="mt-4">
-                <div class="flex justify-between text-sm mb-1">
-                    <span>₹80</span>
-                    <span class="font-bold">= 100 Diamonds</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span>Processing Time</span>
-                    <span class="font-bold">5-7 days</span>
-                </div>
-            </div>
-        </div>
+        <div class="balance-amount" id="availableBalance">₹0</div>
+        <div class="balance-sub">Withdraw anytime to your UPI or Free Fire</div>
     </div>
 
-    <!-- Withdrawal Form Container -->
-    <div id="withdrawalFormContainer" class="mb-8">
-        <!-- Form will be loaded here -->
+    <!-- Withdraw To -->
+    <div class="section-card">
+        <div class="withdraw-to-label">Withdraw To</div>
+        <div class="payment-options">
+            <!-- UPI Option Card -->
+            <div class="payment-option upi-opt selected" id="upiOption" onclick="selectPaymentType('upi')">
+                <div class="check-icon"><i class="fas fa-check"></i></div>
+                <div class="opt-icon"><i class="fas fa-university"></i></div>
+                <div class="opt-name">UPI</div>
+                <div class="opt-desc" id="upiCardDesc">Instant &amp; Duration</div>
+                <!-- Green linked badge — shown only when UPI is saved -->
+                <div class="upi-linked-badge" id="upiSavedBadge">
+                
+                </div>
+            </div>
+
+            <!-- Free Fire Option Card -->
+            <div class="payment-option ff-opt" id="ffOption" onclick="selectPaymentType('free_fire')">
+                <div class="check-icon"><i class="fas fa-check"></i></div>
+                <div class="opt-icon"><i class="fas fa-gamepad"></i></div>
+                <div class="opt-name">Free Fire</div>
+                <div class="opt-desc" id="ffCardDesc">Get Diamonds</div>
+            </div>
+        </div>
+
+        <!-- UPI Form -->
+        <div id="upiForm">
+
+            <!-- hidden span for JS reference -->
+            <span id="savedUpiDisplay" style="display:none;"></span>
+
+            <!-- Skeleton loader shown while API loads -->
+            <div id="upiLoadingSkeleton" class="upi-skeleton"></div>
+
+            <!-- CASE 1: UPI already saved — show linked info box -->
+            <div id="upiConnectedBox" style="display:none; margin-bottom:14px;">
+                <div class="upi-connected">
+                    <div class="upi-logo"><i class="fas fa-university"></i></div>
+                    <div class="upi-info">
+                        <div class="upi-id-text" id="upiConnectedId"></div>
+                    </div>
+                    <div class="connected-badge"><i class="fas fa-check-circle"></i> Linked</div>
+                </div>
+            </div>
+
+            <!-- CASE 2: First time — UPI not set, show input field -->
+            <div id="upiFirstTimeBox" style="display:none; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div class="section-label" style="margin-bottom:0;">Your UPI ID</div>
+                    <span style="font-size:11px; background:#FFF9F0; border:1.5px solid #FFE0B0; color:#D67800; font-weight:700; padding:2px 8px; border-radius:100px;">First time setup</span>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" id="upiNewInput" class="uid-input" placeholder="yourname@upi (e.g. 9876543210@paytm)" style="padding-right:44px;">
+                    <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--purple);">@</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-light); font-weight:600; margin-top:6px;">
+                    <i class="fas fa-lock" style="color:var(--purple);"></i> 
+                    Once saved, your UPI ID will be permanently linked and <strong>cannot be changed</strong>.
+                </div>
+            </div>
+
+            <!-- Amount Input -->
+            <div class="section-label">Enter Amount</div>
+            <div class="amount-input-wrap">
+                <span class="rupee-sign">₹</span>
+                <input type="number" id="upiAmount" placeholder="0" min="5" step="5" oninput="calculateCharges()">
+            </div>
+
+            <!-- Quick Amounts -->
+            <div class="quick-amounts" style="margin-bottom:16px;">
+                <div class="chip" onclick="setAmount(10, event)">₹10</div>
+                <div class="chip" onclick="setAmount(20, event)">₹20</div>
+                <div class="chip" onclick="setAmount(50, event)">₹50</div>
+                <div class="chip" onclick="setAmount(100, event)">₹100</div>
+                <div class="chip" onclick="setAmount(200, event)">₹200</div>
+                <div class="chip" onclick="setAmount(500, event)">₹500</div>
+            </div>
+
+            <!-- Withdrawal Mode -->
+            <div class="section-label">Withdrawal Mode</div>
+            <div class="mode-options" style="margin-bottom:14px;">
+                <div class="mode-opt selected" id="instantMode" onclick="selectMode('instant')">
+                    <div class="mode-title">⚡ Instant</div>
+                    <div class="mode-sub">20% charge</div>
+                    <div class="mode-sub">Min ₹5 • 1-7 days</div>
+                </div>
+                <div class="mode-opt" id="durationMode" onclick="selectMode('duration')">
+                    <div class="mode-title">🗓 Duration</div>
+                    <div class="mode-sub">No charge</div>
+                    <div class="mode-sub" id="durationAvailText">10th–17th only</div>
+                </div>
+            </div>
+
+            <!-- Charge Preview -->
+            <div class="charge-info-box" id="chargeBox" style="display:none;">
+                <div class="charge-row"><span>Amount</span><span class="val" id="calcAmt">₹0</span></div>
+                <div class="charge-row"><span>Charge (20%)</span><span class="val red" id="calcCharge">₹0</span></div>
+                <div class="divider-row"></div>
+                <div class="charge-row"><span>You Receive</span><span class="val green" id="calcFinal">₹0</span></div>
+            </div>
+
+            <!-- Meta -->
+            <div class="meta-info">
+                <div class="meta-pill"><i class="fas fa-info-circle" style="color:var(--purple)"></i> Min: ₹5</div>
+                <span class="meta-sep">|</span>
+                <div class="meta-pill">Max: ₹10,000</div>
+                <span class="meta-sep">|</span>
+                <div class="meta-pill">Charge: 20% (Instant)</div>
+            </div>
+
+            <button class="submit-btn" style="margin-top:16px;" id="upiSubmitBtn" onclick="submitUPIWithdrawal()" disabled>
+                <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Loading...
+            </button>
+        </div>
+
+        <!-- Free Fire Form -->
+        <div id="ffForm" style="display:none;">
+            <div class="section-label" style="margin-bottom:10px;">Select Diamond Pack</div>
+            <div class="ff-cards-grid" id="ffCardsGrid">
+                <div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-light); font-size:13px;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+
+            <div style="margin-top:16px;">
+                <div class="section-label">Free Fire UID</div>
+                <div id="ffUIDSavedBox" class="upi-connected" style="margin-bottom:14px; display:none;">
+                    <div class="upi-logo" style="background:#FFF0E0; color:#FF7A00;"><i class="fas fa-gamepad"></i></div>
+                    <div class="upi-info">
+                        <div class="upi-id-text" id="savedFFDisplay"></div>
+                    </div>
+                    <div class="connected-badge"><i class="fas fa-check-circle"></i> Saved</div>
+                </div>
+                <input type="text" id="ffUID" class="uid-input" placeholder="Enter your 8-10 digit Free Fire UID" maxlength="10">
+                <div style="font-size:11px; color:var(--text-light); font-weight:600; margin-top:6px;">
+                    <i class="fas fa-info-circle"></i> Processing time: 5-7 days
+                </div>
+            </div>
+
+            <button class="submit-btn" style="margin-top:16px; background:linear-gradient(135deg,#FF7A00,#E05A00);" onclick="submitFFWithdrawal()">
+                <i class="fas fa-gem" style="margin-right:8px;"></i> Get Diamonds
+            </button>
+        </div>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="notice-card">
+        <div class="notice-title"><i class="fas fa-exclamation-triangle" style="color:#FFB800;"></i> Important Notice</div>
+        <ul class="notice-list">
+            <li>Entering incorrect UPI ID or Free Fire UID may result in permanent loss of funds.</li>
+            <li>Fake or duplicate accounts are not eligible for payment.</li>
+            <li>Account name must match the UPI holder's name. Mismatch will lead to rejection.</li>
+            <li class="red">Rejected payments are <strong>non-refundable</strong>.</li>
+            <li>Multiple accounts withdrawing to the same UPI ID will be permanently banned.</li>
+            <li>Instant withdrawals have a <strong>20% charge</strong>.</li>
+            <li>Standard withdrawals available only <strong>10th–17th of each month</strong>.</li>
+        </ul>
     </div>
 
     <!-- Withdrawal History -->
-    <div class="bg-white rounded-xl shadow p-6 mb-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold">Withdrawal History</h2>
-            <button onclick="refreshWithdrawals()" class="text-blue-600 hover:text-blue-800">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+    <div class="section-card">
+        <div class="history-header">
+            <div class="history-title">Withdrawal History</div>
+            <button class="refresh-btn" onclick="loadHistory()"><i class="fas fa-sync-alt"></i></button>
         </div>
-        
-        <div id="withdrawalHistory" class="space-y-4">
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i>
-                <p class="mt-2 text-gray-600">Loading withdrawal history...</p>
+        <div id="withdrawalHistory">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin" style="opacity:0.5;"></i>
+                <p style="margin-top:8px;">Loading...</p>
             </div>
         </div>
     </div>
+
+    <div class="bottom-spacer"></div>
 </div>
 
+<!-- Toast Container -->
+<div id="toastContainer"></div>
+
 <script>
-// Global variables
-let currentWithdrawalType = '';
-let selectedDiamondAmount = 0;
+let currentType = 'upi';
+let currentMode = 'instant';
+let selectedFFAmount = 0;
+let savedUpiId = null;   // null = not loaded yet, '' = no UPI saved, 'xyz@upi' = saved
+let savedFFUid = null;
+let upiLoaded = false;
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadAvailableBalance();
-    loadWithdrawalHistory();
+document.addEventListener('DOMContentLoaded', () => {
+    // On page load: keep everything hidden, show skeleton loader
+    // upiFirstTimeBox and upiConnectedBox both hidden — API will decide
+    // Button starts disabled with spinner
+    loadBalance();
+    loadHistory();
+    loadFFCards();
+    loadSavedPaymentMethods();
+    initDurationAvailability();
 });
 
-function loadAvailableBalance() {
+function initDurationAvailability() {
+    const day = new Date().getDate();
+    const available = (day >= 10 && day <= 17);
+    const durationEl = document.getElementById('durationMode');
+    const durationText = document.getElementById('durationAvailText');
+    if (!available) {
+        durationEl.classList.add('disabled');
+        durationText.textContent = 'Available 10th–17th';
+        durationText.style.color = '#E53935';
+    } else {
+        durationText.textContent = 'Min ₹10 • 5-7 days';
+    }
+}
+
+function loadBalance() {
     fetch('ajax/wallet.php?action=get_balance')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.wallet) {
-                // Correct property name
-                document.getElementById('availableBalance').textContent = '₹' + data.wallet.wallet_balance;
+        .then(r => r.json())
+        .then(d => {
+            if (d.success && d.wallet) {
+                document.getElementById('availableBalance').textContent = '₹' + d.wallet.wallet_balance;
+            }
+        }).catch(() => {});
+}
+
+function loadSavedPaymentMethods() {
+    fetch('ajax/wallet.php?action=get_saved_payment_methods')
+        .then(r => r.json())
+        .then(d => {
+            upiLoaded = true;
+
+            // Hide skeleton loader
+            document.getElementById('upiLoadingSkeleton').style.display = 'none';
+
+            if (d.success && d.upi_id) {
+                // ✅ UPI IS SAVED — show linked box, hide input
+                savedUpiId = d.upi_id;
+
+                document.getElementById('savedUpiDisplay').textContent = d.upi_id;
+
+                // Show the green connected info box
+                document.getElementById('upiConnectedBox').style.display = 'block';
+                document.getElementById('upiConnectedId').textContent = d.upi_id;
+
+                // Hide first-time input box
+                document.getElementById('upiFirstTimeBox').style.display = 'none';
+
+                // Update UPI card desc + show green linked badge
+                document.getElementById('upiCardDesc').textContent = d.upi_id;
+                document.getElementById('upiCardDesc').style.color = 'var(--purple)';
+                document.getElementById('upiCardDesc').style.fontWeight = '800';
+                document.getElementById('upiSavedBadge').style.display = 'block';
+
+                // Button ready to submit withdrawal
+                document.getElementById('upiSubmitBtn').disabled = false;
+                document.getElementById('upiSubmitBtn').innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px;"></i> Submit Withdrawal';
+
             } else {
-                document.getElementById('availableBalance').textContent = '₹0';
+                // ❌ NO UPI SAVED — show first time input box
+                savedUpiId = '';
+
+                document.getElementById('upiConnectedBox').style.display = 'none';
+                document.getElementById('upiFirstTimeBox').style.display = 'block';
+
+                // Reset UPI card desc
+                document.getElementById('upiCardDesc').textContent = 'Instant & Duration';
+                document.getElementById('upiCardDesc').style.color = '';
+                document.getElementById('upiCardDesc').style.fontWeight = '';
+                document.getElementById('upiSavedBadge').style.display = 'none';
+
+                // Button ready to save UPI
+                document.getElementById('upiSubmitBtn').disabled = false;
+                document.getElementById('upiSubmitBtn').innerHTML = '<i class="fas fa-link" style="margin-right:8px;"></i> Save UPI & Withdraw';
+            }
+
+            // Free Fire UID handling
+            if (d.success && d.free_fire_uid) {
+                savedFFUid = d.free_fire_uid;
+                document.getElementById('savedFFDisplay').textContent = 'UID: ' + d.free_fire_uid;
+                document.getElementById('ffUID').value = d.free_fire_uid;
+                document.getElementById('ffUID').readOnly = true;
+                document.getElementById('ffUID').style.background = '#F5F5F5';
+                document.getElementById('ffUIDSavedBox').style.display = 'flex';
+                document.getElementById('ffCardDesc').textContent = 'UID: ' + d.free_fire_uid;
+                document.getElementById('ffCardDesc').style.color = 'var(--purple)';
+                document.getElementById('ffCardDesc').style.fontWeight = '800';
             }
         })
-        .catch(err => {
-            console.error('Error fetching wallet:', err);
-            document.getElementById('availableBalance').textContent = '₹0';
+        .catch(() => {
+            // Network error — fallback: show input box
+            upiLoaded = true;
+            savedUpiId = '';
+
+            document.getElementById('upiLoadingSkeleton').style.display = 'none';
+            document.getElementById('upiFirstTimeBox').style.display = 'block';
+            document.getElementById('upiConnectedBox').style.display = 'none';
+            document.getElementById('upiSavedBadge').style.display = 'none';
+
+            document.getElementById('upiSubmitBtn').disabled = false;
+            document.getElementById('upiSubmitBtn').innerHTML = '<i class="fas fa-link" style="margin-right:8px;"></i> Save UPI & Withdraw';
         });
 }
 
-
-function showUPIForm() {
-    currentWithdrawalType = 'upi';
-    const container = document.getElementById('withdrawalFormContainer');
-    
-    const dayOfMonth = new Date().getDate();
-    const isDurationAvailable = (dayOfMonth >= 10 && dayOfMonth <= 17);
-    
-    container.innerHTML = `
-        <div class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-xl font-bold mb-6 text-blue-600">UPI Withdrawal</h2>
-            
-            <form id="upiWithdrawalForm">
-                <!-- Mode Selection -->
-                <div class="mb-6">
-                    <p class="font-bold text-gray-700 mb-3">Select Withdrawal Mode:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <label class="flex items-center p-4 border-2 border-blue-300 rounded-lg cursor-pointer hover:border-blue-500">
-                            <input type="radio" name="withdraw_mode" value="instant" checked class="mr-3 h-5 w-5 text-blue-600">
-                            <div>
-                                <p class="font-bold">Instant Withdrawal</p>
-                                <p class="text-sm text-gray-600">20% deduction</p>
-                                <p class="text-sm text-gray-600">Min: ₹5, Processing: 1-7 days</p>
-                            </div>
-                        </label>
-                        
-                        <label class="flex items-center p-4 border-2 ${isDurationAvailable ? 'border-green-300 hover:border-green-500' : 'border-gray-300 opacity-50'} rounded-lg cursor-pointer ${isDurationAvailable ? '' : 'cursor-not-allowed'}">
-                            <input type="radio" name="withdraw_mode" value="duration" ${isDurationAvailable ? '' : 'disabled'} class="mr-3 h-5 w-5 text-green-600">
-                            <div>
-                                <p class="font-bold">Duration Withdrawal</p>
-                                <p class="text-sm text-gray-600">No charges</p>
-                                <p class="text-sm ${isDurationAvailable ? 'text-gray-600' : 'text-red-600'}">
-                                    ${isDurationAvailable ? 'Min: ₹10, Processing: 5-7 days' : 'Available 10th-17th only'}
-                                </p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Amount Input -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-bold mb-2">Amount (₹)</label>
-                    <input type="number" id="upiAmount" name="amount" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="Enter amount" min="5" step="5" required
-                           oninput="calculateUPICharges()">
-                    
-                    <div class="mt-2 flex space-x-4">
-                        <button type="button" onclick="setUPIAmount(80)" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">₹80</button>
-                        <button type="button" onclick="setUPIAmount(100)" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">₹100</button>
-                        <button type="button" onclick="setUPIAmount(200)" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">₹200</button>
-                        <button type="button" onclick="setUPIAmount(500)" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">₹500</button>
-                    </div>
-                </div>
-                
-                <!-- UPI ID -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-bold mb-2">UPI ID</label>
-                    <input type="text" name="upi_id" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                           placeholder="yourname@upi" required>
-                    <p class="text-sm text-gray-600 mt-2">Enter your UPI ID (e.g., username@okicici)</p>
-                </div>
-                
-                <!-- Calculation Preview -->
-                <div id="upiCalculation" class="mb-6 p-4 bg-gray-50 rounded-lg hidden">
-                    <h4 class="font-bold mb-2">Withdrawal Summary</h4>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Amount:</span>
-                            <span id="calcAmount" class="font-bold">₹0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Instant Charge (20%)</span>
-<small class="text-gray-500">(applies only to instant withdrawals)</small>
-
-                            <span id="calcCharge" class="font-bold text-red-600">₹0</span>
-                        </div>
-                        <div class="flex justify-between border-t pt-2">
-                            <span>You will receive:</span>
-                            <span id="calcFinal" class="font-bold text-green-600 text-lg">₹0</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Submit Button -->
-                <button type="submit" 
-                        class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700">
-                     Withdrawal
-                </button>
-            </form>
-            
-            <div id="upiMessage" class="mt-4 text-center hidden"></div>
-        </div>
-    `;
-    
-    // Attach form submit handler
-    document.getElementById('upiWithdrawalForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        submitUPIWithdrawal(this);
-    });
-    
-    // Attach mode change handler
-    document.querySelectorAll('input[name="withdraw_mode"]').forEach(radio => {
-        radio.addEventListener('change', calculateUPICharges);
-    });
-}
-
-function showFreeFireForm() {
-    currentWithdrawalType = 'free_fire';
-    const container = document.getElementById('withdrawalFormContainer');
-
-    container.innerHTML = `
-        <div class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-xl font-bold mb-6 text-purple-600">Free Fire Diamonds</h2>
-            
-            <form id="ffWithdrawalForm">
-                <!-- Diamond Cards -->
-                <div class="mb-6">
-                    <p class="font-bold text-gray-700 mb-3">Select Diamond Card:</p>
-                    <div id="freeFireCardsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="text-center py-4 text-gray-500">Loading cards...</div>
-                    </div>
-                </div>
-                
-                <!-- Free Fire UID -->
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-bold mb-2">Free Fire UID</label>
-                    <input type="text" name="free_fire_uid" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" 
-                           placeholder="Enter your Free Fire UID" required>
-                    <p class="text-sm text-gray-600 mt-2">Enter your 8-10 digit Free Fire UID</p>
-                </div>
-                
-                <!-- Submit Button -->
-                <button type="submit" 
-                        class="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-purple-700">
-                    Get Diamonds
-                </button>
-            </form>
-            
-            <div id="ffMessage" class="mt-4 text-center hidden"></div>
-        </div>
-    `;
-
-    // Fetch cards from DB
+function loadFFCards() {
     fetch('ajax/wallet.php?action=get_free_fire_cards')
-        .then(res => res.json())
-        .then(data => {
-            const container = document.getElementById('freeFireCardsContainer');
-            if (data.success && data.cards.length) {
+        .then(r => r.json())
+        .then(d => {
+            const grid = document.getElementById('ffCardsGrid');
+            if (d.success && d.cards && d.cards.length) {
                 let html = '';
-data.cards.forEach(card => {
-    html += `
-        <label class="diamond-card p-4 border-2 border-purple-300 rounded-xl cursor-pointer hover:border-purple-500 flex flex-col items-center"
-               onclick="selectDiamondCard(${card.rupees}, ${card.diamonds}, event)">
-            <input type="radio" name="diamond_card" value="${card.rupees}" class="hidden" required>
-            <img src="https://dukaan.b-cdn.net/700x700/webp/3778160/e5254215-6c9c-4c87-88d1-fcc35eaecb66/1624892361684-0495b49d-93e8-4bdc-98a8-d2d2d87b84a8.jpeg" alt="Diamond" class="w-16 h-16 mb-2">
-            <p class="text-2xl font-bold text-purple-600">₹${card.rupees}</p>
-            <p class="text-lg font-bold">${card.diamonds} Diamonds</p>
-        </label>
-    `;
-});
-
-                container.innerHTML = html;
-
-                // Select first card by default
-                selectDiamondCard(data.cards[0].rupees, data.cards[0].diamonds);
+                d.cards.forEach((card, i) => {
+                    html += `
+                        <div class="ff-card ${i === 0 ? 'selected' : ''}" onclick="selectFFCard(${card.rupees}, this)">
+                            <img src="https://dukaan.b-cdn.net/700x700/webp/3778160/e5254215-6c9c-4c87-88d1-fcc35eaecb66/1624892361684-0495b49d-93e8-4bdc-98a8-d2d2d87b84a8.jpeg" alt="Diamond">
+                            <div class="ff-price">₹${card.rupees}</div>
+                            <div class="ff-diamonds">${card.diamonds} 💎</div>
+                        </div>
+                    `;
+                });
+                grid.innerHTML = html;
+                if (d.cards.length) selectedFFAmount = d.cards[0].rupees;
             } else {
-                container.innerHTML = `<div class="text-center py-4 text-gray-500">No active cards available</div>`;
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-light); font-size:13px;">No cards available</div>';
             }
-        })
-        .catch(err => {
-            console.error('Error fetching Free Fire cards:', err);
-        });
-
-    // Form submit
-    document.getElementById('ffWithdrawalForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        formData.append('ajax', 'true');
-        formData.append('action', 'request_withdraw');
-        formData.append('type', 'free_fire');
-        formData.append('amount', selectedDiamondAmount); // from card selection
-        formData.append('mode', 'instant');
-
-        submitFreeFireWithdrawal(formData);
-    });
+        }).catch(() => {});
 }
 
-
-function setUPIAmount(amount) {
-    document.getElementById('upiAmount').value = amount;
-    calculateUPICharges();
-}
-
-function calculateUPICharges() {
-    const amount = parseFloat(document.getElementById('upiAmount')?.value) || 0;
-    const mode = document.querySelector('input[name="withdraw_mode"]:checked')?.value;
-    const calcDiv = document.getElementById('upiCalculation');
-    
-    if (amount <= 0 || !mode) {
-        calcDiv.classList.add('hidden');
-        return;
-    }
-    
-    let charge = 0;
-    let final = amount;
-    
-    if (mode === 'instant') {
-        charge = amount * 0.2;
-        final = amount - charge;
-    }
-    
-    // Update calculation display
-    document.getElementById('calcAmount').textContent = '₹' + amount;
-    document.getElementById('calcCharge').textContent = '₹' + charge.toFixed(2);
-    document.getElementById('calcFinal').textContent = '₹' + final.toFixed(2);
-    
-    calcDiv.classList.remove('hidden');
-}
-
-function selectDiamondCard(amount, diamonds, event) {
-    selectedDiamondAmount = amount;
-
-    // Update card selection UI
-    document.querySelectorAll('.diamond-card').forEach(card => {
-        card.classList.remove('border-purple-500', 'bg-purple-50');
-        card.classList.add('border-purple-300');
-        card.querySelector('input[type="radio"]').checked = false;
-    });
-
-    const selectedCard = event.currentTarget;
-    selectedCard.classList.remove('border-purple-300');
-    selectedCard.classList.add('border-purple-500', 'bg-purple-50');
-    selectedCard.querySelector('input[type="radio"]').checked = true;
-}
-
-
-async function submitUPIWithdrawal(form) {
-    const formData = new FormData(form);
-    formData.append('ajax', 'true');
-    formData.append('action', 'request_withdraw');
-    formData.append('type', 'upi');
-    
-    try {
-        const response = await fetch('ajax/wallet.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        const messageDiv = document.getElementById('upiMessage');
-        messageDiv.classList.remove('hidden');
-        
-        if (data.success) {
-showToast(data.message, data.success ? 'success' : 'error');
-
-            form.reset();
-            loadAvailableBalance();
-            loadWithdrawalHistory();
-        } else {
-showToast(data.message, data.success ? 'success' : 'error');
-
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-async function submitFreeFireWithdrawal(formData) {
-    try {
-        const response = await fetch('ajax/wallet.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        const messageDiv = document.getElementById('ffMessage');
-        messageDiv.classList.remove('hidden');
-        
-        if (data.success) {
-showToast(data.message, data.success ? 'success' : 'error');
-            document.getElementById('ffWithdrawalForm').reset();
-            loadAvailableBalance();
-            loadWithdrawalHistory();
-        } else {
-showToast(data.message, data.success ? 'success' : 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-
-function loadWithdrawalHistory() {
+function loadHistory() {
     const container = document.getElementById('withdrawalHistory');
-    container.innerHTML = `
-        <div class="text-center py-8">
-            <i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i>
-            <p class="mt-2 text-gray-600">Loading withdrawal history...</p>
-        </div>
-    `;
-
+    container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin" style="opacity:0.5;"></i><p style="margin-top:8px;">Loading...</p></div>';
+    
     fetch('ajax/wallet.php?action=get_withdrawal_history')
-        .then(res => res.json())
-        .then(data => {
-            // Check if data.withdrawals.withdrawals exists and is array
-            const withdrawalsArray = data.withdrawals?.withdrawals || [];
-            
-            if (withdrawalsArray.length) {
-                renderWithdrawalHistory(withdrawalsArray);
-            } else {
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <i class="fas fa-inbox text-3xl text-gray-300"></i>
-                        <p class="mt-2 text-gray-600">No withdrawal history</p>
+        .then(r => r.json())
+        .then(d => {
+            const list = d.withdrawals?.withdrawals || [];
+            if (!list.length) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No withdrawal history yet</p></div>';
+                return;
+            }
+            let html = '';
+            list.forEach(w => {
+                const isUpi = w.type === 'upi';
+                const dateStr = new Date(w.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                const statusClass = { approved: 'approved', pending: 'pending', failed: 'failed', refunded: 'refunded' }[w.status] || 'pending';
+                html += `
+                    <div class="history-item">
+                        <div class="history-icon ${isUpi ? 'upi' : 'ff'}">
+                            <i class="fas ${isUpi ? 'fa-university' : 'fa-gamepad'}"></i>
+                        </div>
+                        <div class="history-details">
+                            <div class="history-name">${isUpi ? 'UPI Withdrawal' : 'Free Fire Diamonds'}</div>
+                            <div class="history-date">${dateStr}</div>
+                            <div class="history-sub">${w.upi_id || (w.free_fire_uid ? 'UID: ' + w.free_fire_uid : '')}</div>
+                        </div>
+                        <div class="history-right">
+                            <div class="history-amount">₹${w.amount}</div>
+                            ${w.charge_amount > 0 ? `<div class="history-charge">-₹${w.charge_amount}</div>` : ''}
+                            <span class="status-badge ${statusClass}">${w.status}</span>
+                        </div>
                     </div>
                 `;
-            }
-        })
-        .catch(err => {
-            console.error('Error fetching withdrawals:', err);
-            container.innerHTML = `
-                <div class="text-center py-8 text-red-600">
-                    <p>Error loading withdrawal history.</p>
-                </div>
-            `;
+            });
+            container.innerHTML = html;
+        }).catch(() => {
+            container.innerHTML = '<div class="empty-state" style="color:#E53935;"><i class="fas fa-exclamation-circle"></i><p>Failed to load history</p></div>';
         });
 }
 
+function selectPaymentType(type) {
+    currentType = type;
+    document.getElementById('upiOption').classList.toggle('selected', type === 'upi');
+    document.getElementById('ffOption').classList.toggle('selected', type === 'free_fire');
+    document.getElementById('upiForm').style.display = type === 'upi' ? 'block' : 'none';
+    document.getElementById('ffForm').style.display = type === 'free_fire' ? 'block' : 'none';
+}
 
-function renderWithdrawalHistory(withdrawals) {
-    const container = document.getElementById('withdrawalHistory');
+function selectMode(mode) {
+    const day = new Date().getDate();
+    if (mode === 'duration' && (day < 10 || day > 17)) return;
+    currentMode = mode;
+    document.getElementById('instantMode').classList.toggle('selected', mode === 'instant');
+    document.getElementById('durationMode').classList.toggle('selected', mode === 'duration');
+    calculateCharges();
+}
+
+function setAmount(amt, e) {
+    document.getElementById('upiAmount').value = amt;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    if (e && e.target) e.target.classList.add('active');
+    calculateCharges();
+}
+
+function calculateCharges() {
+    const amount = parseFloat(document.getElementById('upiAmount').value) || 0;
+    const box = document.getElementById('chargeBox');
+    if (amount <= 0) { box.style.display = 'none'; return; }
     
-    if (!withdrawals || withdrawals.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-inbox text-3xl text-gray-300"></i>
-                <p class="mt-2 text-gray-600">No withdrawal history</p>
-                <p class="text-sm text-gray-500">Make your first withdrawal to see history here</p>
-            </div>
-        `;
+    let charge = 0, final = amount;
+    if (currentMode === 'instant') { charge = amount * 0.2; final = amount - charge; }
+    
+    document.getElementById('calcAmt').textContent = '₹' + amount;
+    document.getElementById('calcCharge').textContent = '₹' + charge.toFixed(2);
+    document.getElementById('calcFinal').textContent = '₹' + final.toFixed(2);
+    box.style.display = 'block';
+}
+
+function selectFFCard(amount, el) {
+    selectedFFAmount = amount;
+    document.querySelectorAll('.ff-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+async function submitUPIWithdrawal() {
+    const amount = parseFloat(document.getElementById('upiAmount').value);
+    if (!amount || amount < 5) { showToast('Minimum amount is ₹5', 'error'); return; }
+
+    const btn = document.getElementById('upiSubmitBtn');
+
+    // ✅ CASE 1: UPI already saved in DB — directly submit withdrawal
+    if (savedUpiId) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Processing...';
+
+        const fd = new FormData();
+        fd.append('action', 'request_withdraw');
+        fd.append('type', 'upi');
+        fd.append('amount', amount);
+        fd.append('withdraw_mode', currentMode);
+        fd.append('upi_id', savedUpiId);
+
+        try {
+            const res = await fetch('ajax/wallet.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) {
+                loadBalance();
+                loadHistory();
+                document.getElementById('upiAmount').value = '';
+                document.getElementById('chargeBox').style.display = 'none';
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            }
+        } catch(e) {
+            showToast('Network error. Please try again.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px;"></i> Submit Withdrawal';
+        }
         return;
     }
-    
-    let html = '';
-    withdrawals.forEach(withdrawal => {
-        const statusClass = getWithdrawalStatusClass(withdrawal.status);
-        const typeIcon = withdrawal.type === 'upi' ? 'fa-university' : 'fa-gamepad';
-        const typeColor = withdrawal.type === 'upi' ? 'text-blue-600' : 'text-purple-600';
-        
-        html += `
-            <div class="bg-gray-50 border rounded-lg p-4 hover:bg-white transition-colors">
-                <div class="flex justify-between items-start">
-                    <div class="flex items-start">
-                        <div class="w-12 h-12 rounded-full ${typeColor} bg-opacity-20 flex items-center justify-center mr-4">
-                            <i class="fas ${typeIcon} ${typeColor}"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold">${withdrawal.type === 'upi' ? 'UPI Withdrawal' : 'Free Fire Diamonds'}</p>
-                            <p class="text-sm text-gray-600">
-                                ${new Date(withdrawal.created_at).toLocaleDateString('en-IN', { 
-                                    day: 'numeric', 
-                                    month: 'short', 
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </p>
-                            ${withdrawal.upi_id ? `<p class="text-sm text-gray-600">UPI: ${withdrawal.upi_id}</p>` : ''}
-                            ${withdrawal.free_fire_uid ? `<p class="text-sm text-gray-600">UID: ${withdrawal.free_fire_uid}</p>` : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="text-right">
-                        <p class="text-2xl font-bold text-gray-800">₹${withdrawal.amount}</p>
-                        ${withdrawal.charge_amount > 0 ? 
-                            `<p class="text-sm text-red-600">Charge: ₹${withdrawal.charge_amount}</p>` : 
-                            `<p class="text-sm text-green-600">No charges</p>`
-                        }
-                        <span class="inline-block mt-2 px-3 py-1 rounded-full text-sm font-bold ${statusClass}">
-                            ${withdrawal.status}
-                        </span>
-                    </div>
-                </div>
-                
-                ${withdrawal.admin_notes ? `
-                    <div class="mt-3 p-2 bg-yellow-50 border border-yellow-100 rounded">
-                        <p class="text-sm text-yellow-800"><strong>Note:</strong> ${withdrawal.admin_notes}</p>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
 
-function getWithdrawalStatusClass(status) {
-    switch(status) {
-        case 'approved': return 'bg-green-100 text-green-800';
-        case 'pending': return 'bg-yellow-100 text-yellow-800';
-        case 'failed': return 'bg-red-100 text-red-800';
-        case 'refunded': return 'bg-blue-100 text-blue-800';
-        default: return 'bg-gray-100 text-gray-800';
+    // ❌ CASE 2: First time — get UPI from input, save it, then withdraw
+    const inputVal = (document.getElementById('upiNewInput')?.value || '').trim();
+    if (!inputVal) {
+        showToast('Please enter your UPI ID', 'error');
+        return;
+    }
+    if (!inputVal.includes('@')) {
+        showToast('Invalid UPI ID. Format: name@bank', 'error');
+        return;
+    }
+
+    // Step 1: Save UPI ID
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Saving UPI...';
+
+    try {
+        const saveFd = new FormData();
+        saveFd.append('action', 'save_upi_id');
+        saveFd.append('upi_id', inputVal);
+        const saveRes = await fetch('ajax/wallet.php', { method: 'POST', body: saveFd });
+        const saveData = await saveRes.json();
+
+        if (!saveData.success) {
+            showToast(saveData.message || 'Failed to save UPI ID', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-link" style="margin-right:8px;"></i> Save UPI & Withdraw';
+            return;
+        }
+
+        // ✅ UPI saved successfully — update state and UI
+        savedUpiId = inputVal;
+        document.getElementById('savedUpiDisplay').textContent = inputVal;
+
+        // Hide first time input, show connected box
+        document.getElementById('upiFirstTimeBox').style.display = 'none';
+        document.getElementById('upiConnectedBox').style.display = 'block';
+        document.getElementById('upiConnectedId').textContent = inputVal;
+
+        // Update UPI card with UPI ID and green badge
+        document.getElementById('upiCardDesc').textContent = inputVal;
+        document.getElementById('upiCardDesc').style.color = 'var(--purple)';
+        document.getElementById('upiCardDesc').style.fontWeight = '800';
+        document.getElementById('upiSavedBadge').style.display = 'block';
+
+    } catch(e) {
+        showToast('Network error while saving UPI. Try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-link" style="margin-right:8px;"></i> Save UPI & Withdraw';
+        return;
+    }
+
+    // Step 2: Submit withdrawal request
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Processing...';
+
+    const fd = new FormData();
+    fd.append('action', 'request_withdraw');
+    fd.append('type', 'upi');
+    fd.append('amount', amount);
+    fd.append('withdraw_mode', currentMode);
+    fd.append('upi_id', savedUpiId);
+
+    try {
+        const res = await fetch('ajax/wallet.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) {
+            loadBalance();
+            loadHistory();
+            document.getElementById('upiAmount').value = '';
+            document.getElementById('chargeBox').style.display = 'none';
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        }
+    } catch(e) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right:8px;"></i> Submit Withdrawal';
     }
 }
 
-function refreshWithdrawals() {
-    loadWithdrawalHistory();
+async function submitFFWithdrawal() {
+    if (!selectedFFAmount) { showToast('Please select a diamond pack', 'error'); return; }
+    const uid = document.getElementById('ffUID').value.trim();
+    if (!uid || uid.length < 8) { showToast('Please enter a valid Free Fire UID', 'error'); return; }
+    
+    const fd = new FormData();
+    fd.append('action', 'request_withdraw');
+    fd.append('type', 'free_fire');
+    fd.append('amount', selectedFFAmount);
+    fd.append('withdraw_mode', 'instant');
+    fd.append('free_fire_uid', uid);
+
+    try {
+        const res = await fetch('ajax/wallet.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        showToast(data.message, data.success ? 'success' : 'error');
+        if (data.success) { loadBalance(); loadHistory(); }
+    } catch(e) { showToast('Network error. Please try again.', 'error'); }
 }
+
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
-    
-    // Toast div
     const toast = document.createElement('div');
-    toast.className = `
-        flex items-center px-4 py-3 rounded-lg shadow-lg text-white font-bold
-        ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}
-        animate-slide-in
-    `;
-    toast.textContent = message;
-    
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
     container.appendChild(toast);
-    
-    // Auto remove after 3 seconds
     setTimeout(() => {
-        toast.classList.add('opacity-0', 'transition-opacity', 'duration-500');
-        setTimeout(() => container.removeChild(toast), 500);
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s';
+        setTimeout(() => { if (container.contains(toast)) container.removeChild(toast); }, 400);
     }, 3000);
 }
-
 </script>
-
-<style>
-.diamond-card {
-    transition: all 0.3s ease;
-}
-@keyframes slide-in {
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.5s ease forwards;
-}
-
-.diamond-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-</style>
 </body>
-<!-- Toast Notifications -->
-<div id="toastContainer" class="fixed top-5 right-5 space-y-2 z-50"></div>
-
 </html>

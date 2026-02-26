@@ -23,7 +23,7 @@ if (!$currentUser) {
 // Check if user is admin
 $isAdmin = ($currentUser['role'] === 'admin');
 ?>
-
+ <script src="asserts/js/toast.js" defer></script>
 <style>
 /* ✅ ANDROID WEBVIEW FIX - position fixed nahi chalega */
 .modal-backdrop {
@@ -237,7 +237,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
     </div>
 
     <!-- Account Actions -->
-<div class="grid grid-cols-3  gap-3">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
 
     <!-- Refer -->
     <button onclick="showReferral()"
@@ -248,7 +248,7 @@ $isAdmin = ($currentUser['role'] === 'admin');
     </button>
 
     <!-- Support -->
-    <a href="mailto:follopayhelp@gmail.com?subject=Support%20Request"
+    <a href="?page=help"
         class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-lg text-center">
         <i class="fas fa-headset text-xl block mb-1"></i>
         <p class="text-sm font-semibold">Support</p>
@@ -261,6 +261,14 @@ $isAdmin = ($currentUser['role'] === 'admin');
         <i class="fab fa-telegram-plane text-xl block mb-1"></i>
         <p class="text-sm font-semibold">Telegram</p>
         <p class="text-xs opacity-90">Join</p>
+    </a>
+
+    <!-- WhatsApp Support -->
+    <a href="https://chat.whatsapp.com/FLxdBKN9kMr9Zq1iAgo99y?mode=gi_t" target="_blank"
+        class="bg-gradient-to-r from-green-400 to-green-500 text-white p-3 rounded-lg text-center">
+        <i class="fab fa-whatsapp text-xl block mb-1"></i>
+        <p class="text-sm font-semibold">WhatsApp</p>
+        <p class="text-xs opacity-90">Support</p>
     </a>
 
 </div>
@@ -567,7 +575,7 @@ function refreshActivity() {
 }
 
 function showReferral() {
-    showToast('Referral feature coming soon!', 3000, 'info');
+   showToast('Referral feature coming soon!', 3000, 'info');
 }
 
 async function handleEditProfile(e) {

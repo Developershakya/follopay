@@ -99,7 +99,10 @@ $viewFiles = [
     'test' => 'views/test.php',
     'device-tracking' => 'views/admin/device-tracking.php',
     'delete-account' => 'views/delete-account.php',
-    'admin-account-delete-requests' => 'views/admin/account-delete-request.php'
+    'admin-account-delete-requests' => 'views/admin/account-delete-request.php',
+    'export' => 'views/admin/export.php',
+    'slider-management' => 'views/admin/admin-slider.php',
+    'refer' => 'views/refer.php',
 ];
 
 $viewFile = $viewFiles[$page] ?? 'views/404.php';
@@ -129,7 +132,7 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
     <meta property="og:url" content="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?>">
     <meta property="og:title" content="<?php echo htmlspecialchars($currentSeo['title']); ?>">
     <meta property="og:description" content="<?php echo htmlspecialchars($currentSeo['description']); ?>">
-    <meta property="og:image" content="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770007061/logo_v89hgg.png">
+    <meta property="og:image" content="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770792187/ChatGPT_Image_Feb_11_2026_11_45_43_AM_lhazqw.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -139,7 +142,7 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
     <meta name="twitter:url" content="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?>">
     <meta name="twitter:title" content="<?php echo htmlspecialchars($currentSeo['title']); ?>">
     <meta name="twitter:description" content="<?php echo htmlspecialchars($currentSeo['description']); ?>">
-    <meta name="twitter:image" content="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770007061/logo_v89hgg.png">
+    <meta name="twitter:image" content="https://res.cloudinary.com/dlg5fygaz/image/upload/v1770792187/ChatGPT_Image_Feb_11_2026_11_45_43_AM_lhazqw.png">
     
     <link rel="canonical" href="<?php echo isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http"; ?>://<?php echo $_SERVER['HTTP_HOST']; ?><?php echo $_SERVER['REQUEST_URI']; ?>">
     
@@ -153,6 +156,62 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
     
     <?php include 'header.php'; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Blinking Animation CSS with Aura Wave Effect -->
+    <style>
+        @keyframes auraWave {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5),
+                            0 0 0 5px rgba(59, 130, 246, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.3),
+                            0 0 0 10px rgba(59, 130, 246, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.1),
+                            0 0 0 15px rgba(59, 130, 246, 0);
+            }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                opacity: 1;
+                text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+            }
+            50% {
+                opacity: 0.8;
+                text-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        .help-button-aura {
+            position: relative;
+            animation: auraWave 2s infinite;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .help-button-aura i {
+            animation: glowPulse 1.5s infinite;
+        }
+
+        .help-button-aura:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .help-button-aura {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
     
     <script type="application/ld+json">
     {
@@ -233,6 +292,11 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
 
             <!-- Desktop Nav Items -->
             <div class="hidden md:flex items-center space-x-6 lg:space-x-8">
+                <!-- Help Button - Aura Wave Effect ❓ -->
+                <button onclick="openHelpModalForced()" title="How to use FolloPay - Click for help" class="help-button-aura flex items-center justify-center hover:text-blue-700 transition duration-200">
+                    <i class="fas fa-question-circle text-blue-500 text-3xl" aria-hidden="true"></i>
+                </button>
+                
                 <!-- Wallet Icon - Large & Clickable -->
                 <a href="?page=wallet" title="View your wallet and balance" class="flex items-center justify-center hover:text-green-700 transition duration-200">
                     <i class="fas fa-wallet text-green-500 text-3xl hover:scale-110 transition-transform" aria-hidden="true"></i>
@@ -253,6 +317,11 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
 
             <!-- Mobile Menu Button -->
             <div class="md:hidden flex items-center space-x-3">
+                <!-- Mobile Help Button - Aura Wave Effect -->
+                <button onclick="openHelpModalForced()" title="How to use FolloPay" class="help-button-aura text-blue-500 text-2xl">
+                    <i class="fas fa-question-circle" aria-hidden="true"></i>
+                </button>
+                
                 <a href="?page=wallet" title="View your wallet" class="text-green-600 text-2xl hover:text-green-700 transition">
                     <i class="fas fa-wallet" aria-hidden="true"></i>
                 </a>
@@ -295,6 +364,42 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
                         <i class="fas fa-cog w-5" aria-hidden="true"></i>
                         <span>Admin Dashboard</span>
                     </a>
+                    <a href="?page=admin-posts" title="Admin posts management" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-file-alt w-5" aria-hidden="true"></i>
+                        <span>Admin Posts</span>
+                    </a>
+
+                    <a href="?page=admin-users" title="Admin users management" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-users w-5" aria-hidden="true"></i>
+                        <span>Admin Users</span>
+                    </a>
+
+                    <a href="?page=admin-withdrawals" title="Admin withdrawals management" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-money-bill-wave w-5" aria-hidden="true"></i>
+                        <span>Admin Withdrawals</span>
+                    </a>
+
+                    <a href="?page=admin-screenshot-verification" title="Admin screenshot verification" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-check-circle w-5" aria-hidden="true"></i>
+                        <span>Admin Screenshot Verification</span>
+                    </a>
+
+                    <a href="?page=manage-images" title="Manage Images" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-images w-5" aria-hidden="true"></i>
+                        <span>Manage Images</span>
+                    </a>
+
+                    <a href="?page=admin-account-delete-requests" title="Manage Account Delete Requests" 
+                    class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition">
+                        <i class="fas fa-user-times w-5" aria-hidden="true"></i>
+                        <span>Manage Account Delete Requests</span>
+                    </a>
+
                 </div>
                 <?php endif; ?>
             </nav>
@@ -332,7 +437,7 @@ if (in_array($page, ['login', 'register', 'help' ,'forgot-password','verify-otp'
         </div>
 
         <!-- Main Content -->
-        <main class="flex-1 pt-4 md:pt-6 pb-4 md:pb-6 px-4 overflow-y-auto" role="main">
+        <main class="flex-1 pt-4 md:pt-6 pb-24 md:pb-6 px-4" role="main">
             <div class="max-w-6xl mx-auto">
                 <div id="content">
                     <?php require_once $viewFile; ?>
@@ -402,14 +507,17 @@ $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
                 <i class="fas fa-user text-xl" aria-hidden="true"></i>
                 <span class="text-xs mt-1">Profile</span>
             </a>
+            <a href="?page=refer" title="Refer & Earn" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-gray-600 hover:bg-gray-50">
+                <i class="fas fa-user-plus text-xl" aria-hidden="true"></i>
+                <span class="text-xs mt-1">Refer</span>
+            </a>
 
         <?php endif; ?>
 
     </div>
 </nav>
 
-    <!-- Content Area Mobile Padding (for bottom nav) -->
-    <div class="md:hidden h-16"></div>
+
 
     <script>
         function toggleMobileMenu() {
@@ -476,6 +584,10 @@ $isAdmin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
             });
         });
     </script>
-
+<?php 
+if ($isLoggedIn && isset($_GET['page']) ) {     
+    include_once 'views/how-to-use-modal.php'; 
+} 
+?>
 </body>
 </html>

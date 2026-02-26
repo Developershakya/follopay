@@ -11,7 +11,7 @@ class PostController {
         $this->heartbeat = new Heartbeat($this->db);
     }
     
-    public function getAvailablePosts($userId) {
+public function getAvailablePosts($userId) {
         try {
             // Get posts where user hasn't submitted successfully AND has unused comments available
             $stmt = $this->db->prepare("
@@ -30,7 +30,7 @@ class PostController {
                 AND p.id NOT IN (
                     SELECT DISTINCT post_id FROM user_post_assignments 
                     WHERE user_id = ? 
-                    AND status IN ('submitted', 'approved')
+                    AND status IN ('submitted', 'approved', 'rejected')
                 )
                 HAVING available_comments > 0
                 ORDER BY p.created_at DESC, available_comments DESC
@@ -86,7 +86,38 @@ class PostController {
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+     public function getUserTasksByPeriod($userId, $period = 'today', $status = null)
+    {
+        $db = Database::getInstance()->getConnection();
 
+        // Build date condition
+        if ($period === 'month') {
+            $dateCondition = "YEAR(upa.submitted_time) = YEAR(CURDATE())
+                          AND MONTH(upa.submitted_time) = MONTH(CURDATE())";
+        } else {
+            $dateCondition = "DATE(upa.submitted_time) = CURDATE()";
+        }
+
+        // Build status condition
+        // submitted = pending, approved = complete
+        if ($status && in_array($status, ['submitted','approved','rejected'])) {
+            $statusCondition = "AND upa.status = " . $db->quote($status);
+        } else {
+            $statusCondition = "AND upa.status IN ('submitted','approved','rejected')";
+        }
+
+        $stmt = $db->prepare("
+            SELECT upa.*, p.app_name, p.price, p.app_link
+            FROM user_post_assignments upa
+            JOIN posts p ON p.id = upa.post_id
+            WHERE upa.user_id = ?
+              AND {$dateCondition}
+              {$statusCondition}
+            ORDER BY upa.submitted_time DESC
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     
     public function assignCommentToUser($userId, $postId) {
         try {

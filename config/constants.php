@@ -7,7 +7,7 @@ define('SITE_NAME', 'FolloPay');
 define('SITE_URL', 'http://localhost/follo');
 define('TIMEZONE', 'Asia/Kolkata');
 date_default_timezone_set(TIMEZONE);
-
+define('CRON_SECRET_KEY', 'my_super_secret_12345');
 // Upload paths
 define('UPLOAD_PATH', dirname(__DIR__) . '/uploads/');
 define('SCREENSHOT_PATH', UPLOAD_PATH . 'screenshots/');

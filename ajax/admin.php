@@ -217,8 +217,6 @@ case 'update_post':
             
         case 'get_recent_posts':
 
-            $limit = intval($_GET['limit'] ?? 10);
-
             $stmt = $db->prepare("
                 SELECT 
                     p.*,
@@ -227,10 +225,9 @@ case 'update_post':
                 LEFT JOIN comments c ON p.id = c.post_id
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
-                LIMIT ?
             ");
 
-            $stmt->execute([$limit]);
+            $stmt->execute();
             $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode([

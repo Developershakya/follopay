@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/Validation.php';
+require_once __DIR__ . '/../helpers/PushNotification.php';
 
 class AdminController {
     private $db;
@@ -8,12 +9,12 @@ class AdminController {
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
     }
-    
+
     // Post Management
     public function createPost($data) {
         try {
             $validation = new Validation();
-            
+            $push = new PushNotification();
             $rules = [
                 'app_link' => 'required|url',
                 'app_name' => 'required|min:3|max:200',
@@ -79,7 +80,14 @@ class AdminController {
             $updateStmt->execute([$totalComments, $postId]);
             
             $this->db->commit();
-            
+            $push->sendToAll(
+            "🔥 New Task Available",
+            $data['app_name'] . " - ₹" . $data['price'],
+            [
+            "type" => "new_post",
+            "post_id" => $postId
+            ]
+            );
             return [
                 'success' => true,
                 'post_id' => $postId,
@@ -150,6 +158,7 @@ class AdminController {
     public function addCommentToPost($postId, $commentText) {
         try {
             $commentText = trim($commentText);
+            $push = new PushNotification();
             
             if (empty($commentText) || strlen($commentText) < 3) {
                 return ['success' => false, 'message' => 'Comment must be at least 3 characters'];
@@ -180,7 +189,19 @@ class AdminController {
                 WHERE id = ?
             ");
             $updateStmt->execute([$postId]);
-            
+            // 🔔 GET POST DETAILS FOR NOTIFICATION
+            $postStmt = $this->db->prepare("SELECT app_name, price FROM posts WHERE id = ?");
+            $postStmt->execute([$postId]);
+            $post = $postStmt->fetch(PDO::FETCH_ASSOC);
+
+            $push->sendToAll(
+                "💬 Comments Updated",
+                $post['app_name'] . " - ₹" . $post['price'],
+                [
+                    "type" => "comment_update",
+                    "post_id" => $postId
+                ]
+            );
             return [
                 'success' => true,
                 'comment_id' => $this->db->lastInsertId(),

@@ -10,7 +10,10 @@ if ($_SESSION['role'] !== 'admin') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <script src="https://cdn.tailwindcss.com"></script>
+         <script src="../../assets/js/admin-api.js"></script>
          <?php include 'header.php'; ?>
+<script src="../../assets/js/dashboard.js"></script> <!-- page ke hisaab se change karo -->
     <title>Document</title>
 </head>
 <body>
@@ -639,6 +642,23 @@ function toggleCustomReason(value) {
     background: #555;
 }
 </style>
+<script>
+    getAdminStats().then(data => {
+    if (data.success) {
+        console.log('Total users:', data.stats.total_users);
+        console.log('Total posts:', data.stats.total_posts);
+    }
+});
 
+// Get all posts
+getPosts('all', '').then(data => {
+    if (data.success) {
+        data.posts.forEach(post => {
+            console.log(post.app_name, '₹' + post.price);
+        });
+    }
+});
+
+</script>
 </body>
 </html>

@@ -24,9 +24,9 @@ $db = Database::getInstance()->getConnection();
                 <p class="text-gray-600 mt-1">Manage users, ban/unban, view activity</p>
             </div>
             <div class="flex space-x-4">
-                <button onclick="exportUsers()" class="bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition">
+                <a href="?page=export" class="bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition">
                     <i class="fas fa-file-excel mr-2"></i> Export
-                </button>
+                </a>
                 <button onclick="showAddUserModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-600 transition">
                     <i class="fas fa-user-plus mr-2"></i> Add User
                 </button>
@@ -605,7 +605,7 @@ function toggleAddPassword() {
 async function createUser() {
     const form = document.getElementById('addUserForm');
     const username = document.getElementById('addUsername').value.trim();
-    const email = document.getElementById('addEmail').value.trim();
+    const email = document.getElementById('addEmail').value.trim().toLowerCase();
     const password = document.getElementById('addPasswordInput').value;
     const phone = document.getElementById('addPhone').value.trim();
     const walletBalance = document.getElementById('addWalletBalance').value;
@@ -625,7 +625,7 @@ async function createUser() {
         const response = await fetch('ajax/admin.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: `action=create_user&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&phone=${encodeURIComponent(phone)}&wallet_balance=${walletBalance}&is_admin=${isAdmin ? 1 : 0}`
+            body: `action=create_user&username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&phone=${encodeURIComponent(phone)}&wallet_balance=${walletBalance}&is_admin=${isAdmin ? 1 : null}`
         });
         
         const data = await response.json();
@@ -780,10 +780,7 @@ async function deleteUser(userId, username) {
     }
 }
 
-function exportUsers() {
-    alert('Export feature would generate an Excel file with all user data');
-    // In production: window.location.href = '/ajax/admin.php?action=export_users';
-}
+
 
 // Utility functions
 function escapeHtml(text) {

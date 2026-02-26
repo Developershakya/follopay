@@ -11,6 +11,7 @@ if ($_SESSION['role'] !== 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
      <?php include 'header.php'; ?>
+      <script src="asserts/js/toast.js" defer></script>
     <title>FolloPay</title>
  </head>
  <body>
@@ -130,7 +131,7 @@ if ($_SESSION['role'] !== 'admin') {
                                            required>
                                     <button type="button" onclick="removeCommentField(this)" 
                                             class="ml-2 text-red-500 hover:text-red-700">
-                                        <i class="fas fa-times"></i>
+                                        <i /. class="fas fa-times"></i>
                                     </button>
                                 </div>
                             </div>
@@ -282,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRecentComments();
     
     // Add initial comment fields
-    for (let i = 0; i < 2; i++) {
+    for (let i = 1; i < 1; i++) {
         addCommentField();
     }
 });
@@ -310,7 +311,7 @@ function removeCommentField(button) {
         button.parentElement.remove();
         commentCount--;
     } else {
-        alert('At least one comment is required');
+        window.showToast('At least one comment is required', 2500, 'warning');
     }
 }
 
@@ -385,20 +386,8 @@ document.getElementById('createPostForm').addEventListener('submit', async funct
 });
 
 function showMessage(message, type) {
-    const messageDiv = document.getElementById('createPostMessage');
-    messageDiv.classList.remove('hidden');
-    
-    if (type === 'success') {
-        messageDiv.className = 'text-green-600 font-bold text-center';
-        messageDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${message}`;
-    } else {
-        messageDiv.className = 'text-red-600 font-bold text-center';
-        messageDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i> ${message}`;
-    }
-    
-    setTimeout(() => {
-        messageDiv.classList.add('hidden');
-    }, 5000);
+    const toastType = type === 'success' ? 'success' : 'error';
+    window.showToast(message, 2500, toastType);
 }
 
 async function loadPostStatistics() {
@@ -567,7 +556,7 @@ function submitBulkComments() {
     const commentsText = document.getElementById('bulkComments').value;
     
     if (!postId || !commentsText.trim()) {
-        alert('Please select a post and enter comments');
+        window.showToast('Please select a post and enter comments', 2500, 'warning');
         return;
     }
     
@@ -576,7 +565,7 @@ function submitBulkComments() {
         .filter(comment => comment !== '');
     
     if (comments.length === 0) {
-        alert('Please enter valid comments');
+        window.showToast('Please enter valid comments', 2500, 'warning');
         return;
     }
     
@@ -597,18 +586,18 @@ function submitBulkComments() {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            alert(`Added ${result.added_count} comments successfully!`);
+            window.showToast(`Added ${result.added_count} comments successfully!`, 2500, 'success');
             hideModal('bulkCommentsModal');
             document.getElementById('bulkComments').value = '';
             loadPostStatistics();
             loadRecentComments();
         } else {
-            alert('Error: ' + result.message);
+            window.showToast('Error: ' + result.message, 2500, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Failed to add comments');
+        window.showToast('Failed to add comments', 2500, 'error');
     });
 }
 
@@ -629,6 +618,7 @@ function editPost(postId) {
 function managePostComments(postId) {
     window.location.href = `?page=admin-post-comments&id=${postId}`;
 }
+
 function showConfirmDialog(message, onConfirm) {
     const modal = document.getElementById('confirmModal');
     const msg = document.getElementById('confirmMessage');
@@ -674,11 +664,16 @@ function togglePostStatus(postId, currentStatus) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                window.showToast(data.message || 'Post status updated successfully', 2500, 'success');
                 loadRecentPosts();
                 loadPostStatistics();
             } else {
-                alert(data.message || 'Something went wrong');
+                window.showToast(data.message || 'Something went wrong', 2500, 'error');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.showToast('Failed to update post status', 2500, 'error');
         });
 
     });

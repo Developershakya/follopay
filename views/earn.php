@@ -2,6 +2,8 @@
 /**
  * FolloPay - Earn Money Page
  * Android WebView Optimized Version
+ * Modified: Dynamic content based on link type (PlayStore, Google Maps, YouTube)
+ * Fixed: Comment copying now preserves exact text including quotes
  */
 require_once 'config/constants.php';
 require_once 'controllers/AuthController.php';
@@ -224,6 +226,31 @@ if (!$auth->checkAuth()) {
             background-color: #3b82f6;
             color: white;
         }
+
+        /* Link type indicator badge */
+        .link-type-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge-playstore {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .badge-youtube {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-maps {
+            background-color: #dcfce7;
+            color: #166534;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -322,14 +349,34 @@ function loadEarnPage() {
         });
 }
 
+function getTaskType(appLink) {
+    if (!appLink) return 'playstore';
+    const link = appLink.toLowerCase();
+    
+    // YouTube detection - supports multiple formats
+    if (link.includes('youtube.com') || 
+        link.includes('youtu.be') ||  // Short links like youtu.be/...
+        link.includes('youtube.com/shorts') ||  // YouTube Shorts
+        link.includes('youtube.com/watch') ||   // Regular videos
+        link.includes('youtube.com/@')) {      // Channels
+        return 'youtube';
+    }
+    
+    // Google Maps detection
+     if ( link.includes('google.com/maps') || link.includes('maps.google.')  || link.includes('maps.app') || link.includes('share.google/')) return 'maps';
+    
+    return 'playstore';
+}
+
 function renderAssignment(assignment, earnContainer, mobileEarnContainer) {
     currentAssignmentId = assignment.id;
     const timeLeft = Math.max(0, 300 - assignment.seconds_elapsed);
+    const taskType = getTaskType(assignment.app_link);
     
-    const desktopHTML = createDesktopAssignmentHTML(assignment);
+    const desktopHTML = createDesktopAssignmentHTML(assignment, taskType);
     if (earnContainer) earnContainer.innerHTML = desktopHTML;
     
-    const mobileHTML = createMobileAssignmentHTML(assignment);
+    const mobileHTML = createMobileAssignmentHTML(assignment, taskType);
     if (mobileEarnContainer) mobileEarnContainer.innerHTML = mobileHTML;
     
     // Attach drop zone handlers
@@ -349,25 +396,29 @@ function renderAssignment(assignment, earnContainer, mobileEarnContainer) {
     });
 }
 
-function createDesktopAssignmentHTML(assignment) {
+function createDesktopAssignmentHTML(assignment, taskType) {
+    const taskDetails = getTaskDetails(assignment, taskType);
+    
     return `
         <div class="space-y-8">
             <!-- Task Details -->
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-8">
-                <h2 class="text-2xl font-bold text-blue-800 mb-8">Current Task</h2>
+                <h2 class="text-2xl font-bold text-blue-800 mb-8">Current Task 
+                    <span class="link-type-badge ${taskDetails.badgeClass}">${taskDetails.badgeText}</span>
+                </h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Left Column -->
                     <div class="space-y-6">
                         <div>
-                            <p class="text-sm text-gray-600 font-semibold mb-2">App Name</p>
-                            <p class="font-bold text-2xl text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
+                            <p class="text-sm text-gray-600 font-semibold mb-2">${taskDetails.nameLabel}</p>
+                            <p class="font-bold text-2xl text-gray-800">${escapeHtml(taskDetails.displayName)}</p>
                         </div>
                         
                         <div>
-                            <p class="text-sm text-gray-600 font-semibold mb-2">App Link</p>
-                            <a href="${assignment.app_link || '#'}" target="_blank" rel="noopener noreferrer" class="inline-block">
-                                <img src="${getBadgeByLink(assignment.app_link).img}" 
-                                     alt="${getBadgeByLink(assignment.app_link).alt}"
+                            <p class="text-sm text-gray-600 font-semibold mb-2">${taskDetails.linkLabel}</p>
+                            <a href="${taskDetails.displayLink}" target="_blank" rel="noopener noreferrer" class="inline-block">
+                                <img src="${taskDetails.badgeImg}" 
+                                     alt="${taskDetails.badgeAlt}"
                                      class="h-10 hover:scale-110 transition-transform duration-200" loading="lazy">
                             </a>
                         </div>
@@ -380,19 +431,24 @@ function createDesktopAssignmentHTML(assignment) {
                     
                     <!-- Right Column -->
                     <div class="space-y-4">
-                        <div>
-                            <p class="text-sm text-gray-600 font-semibold mb-3">Assigned Comment</p>
-                            <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md max-h-40 overflow-y-auto">
-                                ${escapeHtml(assignment.comment_text || 'No comment')}
+                        ${
+                            taskType !== 'youtube' 
+                            ? `
+                            <div>
+                                <p class="text-sm text-gray-600 font-semibold mb-3">Assigned Comment</p>
+                                <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md max-h-40 overflow-y-auto">
+                                    ${escapeHtml(assignment.comment_text || 'No comment')}
+                                </div>
+                                <button
+                                  onclick="copyComment(this)"
+                                  data-comment='${assignment.comment_text || ''}'
+                                  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold hover:bg-blue-700 active:bg-blue-800">
+                                  <i class="fas fa-copy mr-2"></i> Copy Comment
+                                </button>
                             </div>
-<button
-  onclick="copyComment(this)"
-  data-text="${escapeHtml(assignment.comment_text || '')}"
-  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold">
-  <i class="fas fa-copy mr-2"></i> Copy Comment
-</button>
-
-                        </div>
+                            `
+                            : ''
+                        }
                         
                         <div class="bg-white rounded-lg p-4 border border-gray-200">
                             <p class="text-sm text-gray-600 font-semibold mb-2">Time Remaining</p>
@@ -407,24 +463,7 @@ function createDesktopAssignmentHTML(assignment) {
             </div>
             
             <!-- Warning Box -->
-            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <h3 class="font-bold text-yellow-800 mb-2">Screenshot Requirements</h3>
-                        <p class="text-sm text-yellow-700 mb-2">
-                            Screenshot must show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">App Name AND Comment together</span>
-                        </p>
-                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
-                            <i class="fas fa-info-circle mr-2"></i>Payment rejected if both not visible
-                        </p>
-                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
-                        <i class="fas fa-info-circle mr-2"></i>App Must be Download then reviewed
-                        </p>
-                                                 
-                    </div>
-                </div>
-            </div>
+            ${getWarningBoxHTML(taskType)}
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Sample Screenshot -->
@@ -432,8 +471,8 @@ function createDesktopAssignmentHTML(assignment) {
                     <h3 class="font-bold text-blue-800 text-lg mb-6">✓ Sample Screenshot</h3>
                     <div class="phone-mockup">
                         <div class="bg-black">
-                            <img src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
-                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-cover" loading="lazy">
+                            <img src="${taskDetails.sampleImage}"
+                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-contain" loading="lazy">
                         </div>
                         <div class="bg-gray-50 p-3">
                             <p class="text-xs text-green-600 font-semibold text-center">
@@ -453,35 +492,37 @@ function createDesktopAssignmentHTML(assignment) {
                         </div>
                         <p class="text-lg font-bold text-gray-800 mb-2">Drag and Drop Your Screenshot Here</p>
                         <p class="text-sm text-gray-600 mb-4">or click below to select from your device</p>
-                          <p class="text-xs text-gray-500 mt-3">JPG, PNG, GIF, WebP (Max 5MB)</p>
+                        <p class="text-xs text-gray-500 mt-3">JPG, PNG, GIF, WebP (Max 5MB)</p>
                         <input type="file" id="desktopFileInput" accept="image/*">
                     </div>
-
-
                 </div>
             </div>
         </div>
     `;
 }
 
-function createMobileAssignmentHTML(assignment) {
+function createMobileAssignmentHTML(assignment, taskType) {
+    const taskDetails = getTaskDetails(assignment, taskType);
+    
     return `
         <div class="space-y-4">
             <!-- Task Details -->
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
-                <h2 class="text-lg font-bold text-blue-800 mb-4">Current Task</h2>
+                <h2 class="text-lg font-bold text-blue-800 mb-4">Current Task 
+                    <span class="link-type-badge ${taskDetails.badgeClass}">${taskDetails.badgeText}</span>
+                </h2>
                 
                 <div class="space-y-3 mb-4">
                     <div>
-                        <p class="text-xs text-gray-600 font-semibold mb-1">App Name</p>
-                        <p class="font-bold text-lg text-gray-800">${escapeHtml(assignment.app_name || 'Unknown')}</p>
+                        <p class="text-xs text-gray-600 font-semibold mb-1">${taskDetails.nameLabel}</p>
+                        <p class="font-bold text-lg text-gray-800">${escapeHtml(taskDetails.displayName)}</p>
                     </div>
                     
                     <div>
-                        <p class="text-xs text-gray-600 font-semibold mb-1">App Link</p>
-                        <a href="${assignment.app_link || '#'}" target="_blank" rel="noopener noreferrer" class="inline-block">
-                            <img src="${getBadgeByLink(assignment.app_link).img}" 
-                                 alt="${getBadgeByLink(assignment.app_link).alt}"
+                        <p class="text-xs text-gray-600 font-semibold mb-1">${taskDetails.linkLabel}</p>
+                        <a href="${taskDetails.displayLink}" target="_blank" rel="noopener noreferrer" class="inline-block">
+                            <img src="${taskDetails.badgeImg}" 
+                                 alt="${taskDetails.badgeAlt}"
                                  class="h-8 hover:scale-110 transition-transform" loading="lazy">
                         </a>
                     </div>
@@ -492,19 +533,24 @@ function createMobileAssignmentHTML(assignment) {
                     </div>
                 </div>
                 
-                <div class="mb-4">
-                    <p class="text-xs text-gray-600 font-semibold mb-2">Assigned Comment</p>
-                    <div class="bg-gray-900 text-white p-3 rounded-lg font-mono text-xs break-words max-h-32 overflow-y-auto">
-                        ${escapeHtml(assignment.comment_text || 'No comment')}
-                    </div>
-<button
-  onclick="copyComment(this)"
-  data-text="${escapeHtml(assignment.comment_text || '')}"
-  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold">
-  <i class="fas fa-copy mr-2"></i> Copy Comment
-</button>
-
-                </div>
+                        ${
+                            taskType !== 'youtube' 
+                            ? `
+                            <div>
+                                <p class="text-sm text-gray-600 font-semibold mb-3">Assigned Comment</p>
+                                <div class="bg-gray-900 text-white p-5 rounded-lg font-mono text-sm break-words shadow-md max-h-40 overflow-y-auto">
+                                    ${escapeHtml(assignment.comment_text || 'No comment')}
+                                </div>
+                                <button
+                                  onclick="copyComment(this)"
+                                  data-comment='${assignment.comment_text || ''}'
+                                  class="w-full bg-blue-600 text-white py-3 rounded-lg mt-3 font-bold hover:bg-blue-700 active:bg-blue-800">
+                                  <i class="fas fa-copy mr-2"></i> Copy Comment
+                                </button>
+                            </div>
+                            `
+                            : ''
+                        }
                 
                 <div class="bg-white rounded-lg p-3 border border-gray-200 mb-4">
                     <p class="text-xs text-gray-600 font-semibold mb-1">Time Remaining</p>
@@ -517,23 +563,7 @@ function createMobileAssignmentHTML(assignment) {
             </div>
             
             <!-- Warning Box -->
-            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
-                <div class="flex items-start gap-2">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 text-base flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <h3 class="font-bold text-yellow-800 text-sm mb-1">Screenshot Requirements</h3>
-                        <p class="text-xs text-yellow-700 mb-1">
-                            Show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">App Name & Comment</span> together
-                        </p>
-                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
-                            <i class="fas fa-info-circle mr-1"></i>Payment rejected if not both visible
-                        </p>
-                         <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
-                        <i class="fas fa-info-circle mr-2"></i>App Must be Download then reviewed
-                        </p>
-                    </div>
-                </div>
-            </div>
+            ${getWarningBoxHTMLMobile(taskType)}
             
             <!-- Sample Screenshot -->
             <div class="bg-gradient-to-b from-blue-50 to-white border border-blue-200 rounded-lg p-4">
@@ -541,8 +571,8 @@ function createMobileAssignmentHTML(assignment) {
                 <div class="flex justify-center">
                     <div class="phone-mockup">
                         <div class="bg-black">
-                            <img src="${assignment.sample_image || 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1769955414/sample-portrait_xplmhh.png'}"
-                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-cover" loading="lazy">
+                            <img src="${taskDetails.sampleImage}"
+                                 alt="Sample screenshot" class="w-full aspect-[9/16] object-contain" loading="lazy">
                         </div>
                         <div class="bg-gray-50 p-2">
                             <p class="text-xs text-green-600 font-semibold text-center">
@@ -566,11 +596,187 @@ function createMobileAssignmentHTML(assignment) {
                     <p class="text-xs text-gray-500 mt-3">JPG, PNG, GIF, WebP (Max 5MB)</p>
                     <input type="file" id="mobileFileInput" accept="image/*">
                 </div>
-
-
             </div>
         </div>
     `;
+}
+
+function getTaskDetails(assignment, taskType) {
+    let details = {
+        nameLabel: 'App Name',
+        linkLabel: 'App Link 👇👇👇',
+        displayName: assignment.app_name || 'Unknown',
+        displayLink: assignment.app_link || '#',
+        badgeText: 'PlayStore',
+        badgeClass: 'badge-playstore',
+        badgeImg: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg',
+        badgeAlt: 'Get it on Google Play',
+        sampleImage: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770825741/playstore_ust6hw.png' // Default PlayStore
+    };
+
+    if (taskType === 'youtube') {
+        details.nameLabel = 'Channel Name';
+        details.linkLabel = 'Channel Link 👇👇👇';
+        details.displayName = extractYoutubeChannelName(assignment.app_name) || 'YouTube Channel';
+        details.badgeText = 'YouTube';
+        details.badgeClass = 'badge-youtube';
+        details.badgeImg = 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png';
+        details.badgeAlt = 'Subscribe on YouTube';
+        // YouTube Sample Image
+        details.sampleImage = 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770825742/youtube_gqbsn0.png';
+    } else if (taskType === 'maps') {
+        details.nameLabel = 'Location Name';
+        details.linkLabel = 'Location Link 👇👇👇';
+        details.displayName = extractLocationName(assignment.app_name) || 'Location';
+        details.badgeText = 'Google Maps';
+        details.badgeClass = 'badge-maps';
+        details.badgeImg = 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png';
+        details.badgeAlt = 'Rate us on Google Maps';
+        // Google Maps Sample Image
+        details.sampleImage = 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770825744/googlereview_g1ad0m.png';
+    }
+
+    return details;
+}
+
+function getWarningBoxHTML(taskType) {
+    if (taskType === 'youtube') {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 mb-2">YouTube Requirements</h3>
+                        <p class="text-sm text-yellow-700 mb-2">
+                            Screenshot must show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">Channel Name, Comment & Subscribe Button</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                            <i class="fas fa-info-circle mr-2"></i>Channel must be subscribed
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded mt-2">
+                            <i class="fas fa-info-circle mr-2"></i>Comment list not required
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (taskType === 'maps') {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 mb-2">Google Maps Review Requirements</h3>
+                        <p class="text-sm text-yellow-700 mb-2">
+                            Screenshot must show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">Location Name, Review & Published Status</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                            <i class="fas fa-info-circle mr-2"></i>Review must be published and live
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded mt-2">
+                            <i class="fas fa-info-circle mr-2"></i>Your name/profile should be visible
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-6">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-xl flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 mb-2">Screenshot Requirements</h3>
+                        <p class="text-sm text-yellow-700 mb-2">
+                            Screenshot must show <span class="font-bold bg-yellow-200 px-2 py-1 rounded">App Name AND Comment together</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded">
+                            <i class="fas fa-info-circle mr-2"></i>Payment rejected if both not visible
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-3 rounded mt-2">
+                            <i class="fas fa-info-circle mr-2"></i>App Must be Downloaded then open then go to playstore then review and delete after 7 days
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function getWarningBoxHTMLMobile(taskType) {
+    if (taskType === 'youtube') {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                <div class="flex items-start gap-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-base flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 text-sm mb-1">YouTube Requirements</h3>
+                        <p class="text-xs text-yellow-700 mb-1">
+                            Show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">Channel Name, Comment & Subscribe</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
+                            <i class="fas fa-info-circle mr-1"></i>Must be subscribed
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>Comment list not needed
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (taskType === 'maps') {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                <div class="flex items-start gap-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-base flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 text-sm mb-1">Google Maps Review</h3>
+                        <p class="text-xs text-yellow-700 mb-1">
+                            Show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">Location, Review & Published</span>
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
+                            <i class="fas fa-info-circle mr-1"></i>Review must be live
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>Your profile visible
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4">
+                <div class="flex items-start gap-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 text-base flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-yellow-800 text-sm mb-1">Screenshot Requirements</h3>
+                        <p class="text-xs text-yellow-700 mb-1">
+                            Show <span class="font-bold bg-yellow-200 px-1 py-0.5 rounded">App Name & Comment</span> together
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded">
+                            <i class="fas fa-info-circle mr-1"></i>Payment rejected if not both visible
+                        </p>
+                        <p class="text-xs text-yellow-600 bg-yellow-100 p-2 rounded mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>App Must be Downloaded then reviewed
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function extractYoutubeChannelName(text) {
+    // Extract channel name from app_name field if it contains one
+    // This can be customized based on your data format
+    return text || 'YouTube Channel';
+}
+
+function extractLocationName(text) {
+    // Extract location name from app_name field
+    // This can be customized based on your data format
+    return text || 'Location';
 }
 
 function attachDropZoneHandlers(elementId, assignmentId) {
@@ -747,27 +953,35 @@ function startTimer(seconds, assignmentId) {
 }
 
 function copyComment(btn) {
-    const text = btn.dataset.text;
+    // Get comment text directly from the data-comment attribute
+    const text = btn.getAttribute('data-comment');
 
     if (!text) {
         showToast('Nothing to copy', 2000, 'error');
         return;
     }
 
+    // Use clipboard API if available
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text)
-            .then(() => showToast('Comment copied!', 2000, 'success'))
-            .catch(() => fallbackCopy(text));
+            .then(() => {
+                showToast('Comment copied!', 2000, 'success');
+                // Visual feedback
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            })
+            .catch(() => fallbackCopy(text, btn));
     } else {
-        fallbackCopy(text);
+        fallbackCopy(text, btn);
     }
 }
 
-function fallbackCopy(text) {
+function fallbackCopy(text, btn) {
     const textarea = document.createElement('textarea');
     textarea.value = text;
-
-    // 🔥 mobile fix
     textarea.style.position = 'fixed';
     textarea.style.top = '-1000px';
     textarea.style.opacity = '0';
@@ -779,13 +993,21 @@ function fallbackCopy(text) {
     try {
         document.execCommand('copy');
         showToast('Comment copied!', 2000, 'success');
+        
+        // Visual feedback
+        if (btn) {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        }
     } catch (e) {
         showToast('Copy not supported', 3000, 'error');
     }
 
     document.body.removeChild(textarea);
 }
-
 
 function showConfirmDialog(title, message, onConfirm, onCancel) {
     let dialog = document.getElementById('confirmDialog');
@@ -826,7 +1048,6 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
         </div>
     `;
 
-    // ✅ SAFE EVENT BINDING (design unchanged)
     dialog.querySelector('#confirmOk').addEventListener('click', () => {
         dialog.remove();
         if (typeof onConfirm === 'function') onConfirm();
@@ -836,23 +1057,6 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
         dialog.remove();
         if (typeof onCancel === 'function') onCancel();
     });
-}
-
-
-function confirmDialogAction() {
-    closeConfirmDialog();
-    if (window.confirmDialogCallback) {
-        window.confirmDialogCallback();
-    }
-}
-
-function closeConfirmDialog() {
-    let dialog = document.getElementById('confirmDialog');
-    if (dialog) {
-        dialog.remove();
-    }
-    window.confirmDialogCallback = null;
-    window.cancelDialogCallback = null;
 }
 
 function refreshComment(assignmentId, postId) {
@@ -897,11 +1101,11 @@ function getBadgeByLink(appLink) {
     
     appLink = appLink.toLowerCase();
     
-    if (appLink.includes('youtube')) {
+    if (appLink.includes('youtube') || appLink.includes('youtu.be') || appLink.includes('youtube.com/channel') || appLink.includes('youtube.com/user')) {
         return { img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031900/Screenshot_2026-02-02_165110_zj0g1h.png', alt: 'Subscribe on YouTube' };
     }
-    if (appLink.includes('maps')) {
-        return { img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png', alt: 'Rate us on Google Reviews' };
+    if (appLink.includes('maps') || appLink.includes('google.com/maps')) {
+        return { img: 'https://res.cloudinary.com/dlg5fygaz/image/upload/v1770031901/Screenshot_2026-02-02_165134_s9eeag.png', alt: 'Rate us on Google Maps' };
     }
     
     return { img: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg', alt: 'Get it on Google Play' };
@@ -921,10 +1125,24 @@ function loadAvailablePosts() {
                     const appName = post.app_name || 'Unknown';
                     const appLink = post.app_link || '#';
                     const price = parseFloat(post.price) || 0;
+                    const taskType = getTaskType(appLink);
+                    
+                    let displayName = appName;
+                    let badgeClass = 'badge-playstore';
+                    
+                    if (taskType === 'youtube') {
+                        displayName = extractYoutubeChannelName(appName);
+                        badgeClass = 'badge-youtube';
+                    } else if (taskType === 'maps') {
+                        displayName = extractLocationName(appName);
+                        badgeClass = 'badge-maps';
+                    }
                     
                     html += `
                         <div class="bg-white border border-gray-200 rounded-lg shadow hover:shadow-lg transition-shadow p-5">
-                            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate">${escapeHtml(appName)}</h3>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate">${escapeHtml(displayName)} 
+                                <span class="link-type-badge ${badgeClass}" style="font-size: 0.65rem; padding: 0.2rem 0.5rem;">${taskType === 'youtube' ? 'YouTube' : taskType === 'maps' ? 'Maps' : 'PlayStore'}</span>
+                            </h3>
                             <a href="${appLink}" target="_blank" rel="noopener noreferrer" class="inline-block mb-3">
                                 <img src="${getBadgeByLink(appLink).img}" alt="Store link" class="h-8 hover:scale-110 transition-transform" loading="lazy">
                             </a>
